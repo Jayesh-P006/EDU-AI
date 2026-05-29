@@ -12,15 +12,16 @@ import
 } from 'lucide-react';
 import Chart from 'react-apexcharts';
 import api, {createInterview, scheduleInterview, getJobInterviews} from '../services/api';
+import {useFeatures} from '../services/FeatureContext';
 import './CompanyDashboard.css';
 
 const TABS=[
   {key: 'overview', label: 'Overview', icon: <BarChart3 size={16} />},
   {key: 'jobs', label: 'Job Postings', icon: <Briefcase size={16} />},
-  {key: 'candidates', label: 'Candidates', icon: <Users size={16} />},
-  {key: 'quiz', label: 'Live Quiz', icon: <Zap size={16} />},
-  {key: 'contest', label: 'Coding Contest', icon: <Terminal size={16} />},
-  {key: 'interviews', label: 'Interviews', icon: <Video size={16} />},
+  {key: 'candidates', label: 'Candidates', icon: <Users size={16} />, featureId: 'company.candidates.ats_screening'},
+  {key: 'quiz', label: 'Live Quiz', icon: <Zap size={16} />, featureId: 'company.quiz.management'},
+  {key: 'contest', label: 'Coding Contest', icon: <Terminal size={16} />, featureId: 'company.contest.management'},
+  {key: 'interviews', label: 'Interviews', icon: <Video size={16} />, featureId: 'company.interviews.start'},
 ];
 
 function CompanyDashboard()
@@ -29,6 +30,10 @@ function CompanyDashboard()
   const [user, setUser]=useState(null);
   const [activeTab, setActiveTab]=useState('overview');
   const [searchQuery, setSearchQuery]=useState('');
+  const {features}=useFeatures();
+
+  // Filter tabs based on feature toggles
+  const visibleTabs=TABS.filter(t => !t.featureId||features[t.featureId]!==false);
   const [showPostJobModal, setShowPostJobModal]=useState(false);
   const [jobForm, setJobForm]=useState({title: '', department: '', location: 'Remote', type: 'Full-Time', description: '', requirements: '', skills: '', minCGPA: '', requiredSkills: '', preferredSkills: '', minExperience: '', maxExperience: '', requiredEducation: '', autoShortlist: false, minATSScore: 60, salaryMin: '', salaryMax: ''});
   const [jobs, setJobs]=useState([]);
@@ -774,9 +779,9 @@ function CompanyDashboard()
       {/* ── Navbar ──────────────────────────────────────────── */}
       <nav className="cmpd-navbar">
         <div className="cmpd-navbar-inner">
-          <Link to="/company-dashboard" className="cmpd-logo">RecruitAI</Link>
+          <Link to="/company-dashboard" className="cmpd-logo">EDU-AI</Link>
           <div className="cmpd-nav-tabs">
-            {TABS.map((t) => (
+            {visibleTabs.map((t) => (
               <button
                 key={t.key}
                 className={`cmpd-tab ${activeTab===t.key? 'active':''}`}
@@ -811,9 +816,11 @@ function CompanyDashboard()
                   <h1>Company Dashboard</h1>
                   <p>Welcome back, {user.username}. Here's your hiring overview.</p>
                 </div>
-                <button className="cmpd-btn-secondary" onClick={() => navigate('/admin-scoring')}>
-                  <Trophy size={16} /> Scoring & Rankings
-                </button>
+                {features['company.overview.scoring_link'] !== false && (
+                  <button className="cmpd-btn-secondary" onClick={() => navigate('/admin-scoring')}>
+                    <Trophy size={16} /> Scoring & Rankings
+                  </button>
+                )}
                 <button className="cmpd-btn-primary" onClick={() => {setActiveTab('jobs'); setShowPostJobModal(true);}}>
                   <Plus size={16} /> Post New Job
                 </button>
@@ -821,329 +828,353 @@ function CompanyDashboard()
 
               {/* ═══ KPI CARDS ROW (5 Cards with Sparklines) ═══ */}
               <div className="ov-kpi-row">
-                {/* Active Jobs */}
-                <div className="ov-kpi-card">
-                  <div className="ov-kpi-top">
-                    <div className="ov-kpi-icon" style={{background: 'rgba(59,130,246,0.12)', color: '#60a5fa'}}><Briefcase size={18} /></div>
-                    <div className="ov-kpi-trend up"><TrendingUp size={12} /> +15%</div>
-                  </div>
-                  <div className="ov-kpi-value">{companyStats.activeJobs||jobs.length}</div>
-                  <div className="ov-kpi-label">Active Jobs</div>
-                  <div className="ov-kpi-spark">
-                    <Chart options={makeSparkOpts('#3b82f6')} series={[{data: sparkData.jobs}]} type="area" height={48} width="100%" />
-                  </div>
-                </div>
-
-                {/* Applicants */}
-                <div className="ov-kpi-card">
-                  <div className="ov-kpi-top">
-                    <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Users size={18} /></div>
-                    <div className="ov-kpi-trend up"><TrendingUp size={12} /> +23%</div>
-                  </div>
-                  <div className="ov-kpi-value">{companyStats.totalApplicants}</div>
-                  <div className="ov-kpi-label">Applicants</div>
-                  <div className="ov-kpi-spark">
-                    <Chart options={makeSparkOpts('#a855f7')} series={[{data: sparkData.applicants}]} type="area" height={48} width="100%" />
-                  </div>
-                </div>
-
-                {/* Offered */}
-                <div className="ov-kpi-card">
-                  <div className="ov-kpi-top">
-                    <div className="ov-kpi-icon" style={{background: 'rgba(20,184,166,0.12)', color: '#2dd4bf'}}><Award size={18} /></div>
-                    <div className="ov-kpi-trend up"><TrendingUp size={12} /> +8%</div>
-                  </div>
-                  <div className="ov-kpi-value">{companyStats.offered}</div>
-                  <div className="ov-kpi-label">Offered</div>
-                  <div className="ov-kpi-spark">
-                    <Chart options={makeSparkOpts('#14b8a6')} series={[{data: sparkData.offered}]} type="area" height={48} width="100%" />
-                  </div>
-                </div>
-
-                {/* Hire Rate */}
-                <div className="ov-kpi-card">
-                  <div className="ov-kpi-top">
-                    <div className="ov-kpi-icon" style={{background: 'rgba(34,197,94,0.12)', color: '#4ade80'}}><TrendingUp size={18} /></div>
-                    <div className={`ov-kpi-trend ${hireRateNum>10? 'up':'down'}`}>
-                      {hireRateNum>10? <TrendingUp size={12} />:<TrendingUp size={12} style={{transform: 'scaleY(-1)'}} />}
-                      {hireRateNum>10? '+5%':'-2%'}
+                {features['company.overview.kpi_cards'] !== false && (
+                  <>
+                    {/* Active Jobs */}
+                    <div className="ov-kpi-card">
+                      <div className="ov-kpi-top">
+                        <div className="ov-kpi-icon" style={{background: 'rgba(59,130,246,0.12)', color: '#60a5fa'}}><Briefcase size={18} /></div>
+                        <div className="ov-kpi-trend up"><TrendingUp size={12} /> +15%</div>
+                      </div>
+                      <div className="ov-kpi-value">{companyStats.activeJobs||jobs.length}</div>
+                      <div className="ov-kpi-label">Active Jobs</div>
+                      <div className="ov-kpi-spark">
+                        <Chart options={makeSparkOpts('#3b82f6')} series={[{data: sparkData.jobs}]} type="area" height={48} width="100%" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="ov-kpi-value">{hireRateNum}%</div>
-                  <div className="ov-kpi-label">Hire Rate</div>
-                  <div className="ov-kpi-spark">
-                    <Chart options={makeSparkOpts('#22c55e')} series={[{data: sparkData.hireRate}]} type="area" height={48} width="100%" />
-                  </div>
-                </div>
+
+                    {/* Applicants */}
+                    <div className="ov-kpi-card">
+                      <div className="ov-kpi-top">
+                        <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Users size={18} /></div>
+                        <div className="ov-kpi-trend up"><TrendingUp size={12} /> +23%</div>
+                      </div>
+                      <div className="ov-kpi-value">{companyStats.totalApplicants}</div>
+                      <div className="ov-kpi-label">Applicants</div>
+                      <div className="ov-kpi-spark">
+                        <Chart options={makeSparkOpts('#a855f7')} series={[{data: sparkData.applicants}]} type="area" height={48} width="100%" />
+                      </div>
+                    </div>
+
+                    {/* Offered */}
+                    <div className="ov-kpi-card">
+                      <div className="ov-kpi-top">
+                        <div className="ov-kpi-icon" style={{background: 'rgba(20,184,166,0.12)', color: '#2dd4bf'}}><Award size={18} /></div>
+                        <div className="ov-kpi-trend up"><TrendingUp size={12} /> +8%</div>
+                      </div>
+                      <div className="ov-kpi-value">{companyStats.offered}</div>
+                      <div className="ov-kpi-label">Offered</div>
+                      <div className="ov-kpi-spark">
+                        <Chart options={makeSparkOpts('#14b8a6')} series={[{data: sparkData.offered}]} type="area" height={48} width="100%" />
+                      </div>
+                    </div>
+
+                    {/* Hire Rate */}
+                    <div className="ov-kpi-card">
+                      <div className="ov-kpi-top">
+                        <div className="ov-kpi-icon" style={{background: 'rgba(34,197,94,0.12)', color: '#4ade80'}}><TrendingUp size={18} /></div>
+                        <div className={`ov-kpi-trend ${hireRateNum>10? 'up':'down'}`}>
+                          {hireRateNum>10? <TrendingUp size={12} />:<TrendingUp size={12} style={{transform: 'scaleY(-1)'}} />}
+                          {hireRateNum>10? '+5%':'-2%'}
+                        </div>
+                      </div>
+                      <div className="ov-kpi-value">{hireRateNum}%</div>
+                      <div className="ov-kpi-label">Hire Rate</div>
+                      <div className="ov-kpi-spark">
+                        <Chart options={makeSparkOpts('#22c55e')} series={[{data: sparkData.hireRate}]} type="area" height={48} width="100%" />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Avg AI Fit Score — Radial Bar */}
-                <div className="ov-kpi-card ov-kpi-radial">
-                  <div className="ov-kpi-top">
-                    <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Brain size={18} /></div>
+                {features['company.overview.ai_fit_score'] !== false && (
+                  <div className="ov-kpi-card ov-kpi-radial">
+                    <div className="ov-kpi-top">
+                      <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Brain size={18} /></div>
+                    </div>
+                    <div className="ov-kpi-label" style={{marginBottom: 4}}>Avg. AI Fit Score</div>
+                    <div className="ov-kpi-radial-chart">
+                      <Chart options={radialOpts} series={[aiFitScore]} type="radialBar" height={140} width={140} />
+                    </div>
                   </div>
-                  <div className="ov-kpi-label" style={{marginBottom: 4}}>Avg. AI Fit Score</div>
-                  <div className="ov-kpi-radial-chart">
-                    <Chart options={radialOpts} series={[aiFitScore]} type="radialBar" height={140} width={140} />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* ═══ MIDDLE SECTION: Pipeline, Radar, Heatmap ═══ */}
               <div className="ov-mid-row">
                 {/* Widget A: Hiring Pipeline Funnel */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Activity size={16} /> Hiring Pipeline</div>
-                    <span className="ov-panel-badge">{companyStats.totalApplicants||0} total</span>
+                {features['company.overview.hiring_pipeline'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Activity size={16} /> Hiring Pipeline</div>
+                      <span className="ov-panel-badge">{companyStats.totalApplicants||0} total</span>
+                    </div>
+                    <div className="ov-panel-body">
+                      <Chart options={funnelOpts} series={funnelSeries} type="bar" height={260} />
+                    </div>
                   </div>
-                  <div className="ov-panel-body">
-                    <Chart options={funnelOpts} series={funnelSeries} type="bar" height={260} />
-                  </div>
-                </div>
+                )}
 
                 {/* Widget B: AI Skill Gap Radar */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Target size={16} /> AI Skill Gap Radar</div>
-                    <span className="ov-panel-badge-purple">Required vs Pool</span>
+                {features['company.overview.skill_gap_radar'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Target size={16} /> AI Skill Gap Radar</div>
+                      <span className="ov-panel-badge-purple">Required vs Pool</span>
+                    </div>
+                    <div className="ov-panel-body">
+                      <Chart options={radarOpts} series={radarSeries} type="radar" height={280} />
+                    </div>
                   </div>
-                  <div className="ov-panel-body">
-                    <Chart options={radarOpts} series={radarSeries} type="radar" height={280} />
-                  </div>
-                </div>
+                )}
 
                 {/* Widget C: Assessment Heatmap */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><BarChart3 size={16} /> Assessment Heatmap</div>
-                    <span className="ov-panel-badge-green">Performance</span>
+                {features['company.overview.assessment_heatmap'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><BarChart3 size={16} /> Assessment Heatmap</div>
+                      <span className="ov-panel-badge-green">Performance</span>
+                    </div>
+                    <div className="ov-panel-body">
+                      <Chart options={heatOpts} series={heatSeries} type="heatmap" height={260} />
+                    </div>
                   </div>
-                  <div className="ov-panel-body">
-                    <Chart options={heatOpts} series={heatSeries} type="heatmap" height={260} />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* ═══ ANALYTICS SECTION: Funnel + Applicants per Job + Rates ═══ */}
               <div className="ov-analytics-row">
                 {/* Hiring Funnel */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Activity size={16} /> Hiring Funnel</div>
-                    <span className="ov-panel-badge">{companyStats.totalApplicants||0} applicants</span>
+                {features['company.overview.hiring_funnel'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Activity size={16} /> Hiring Funnel</div>
+                      <span className="ov-panel-badge">{companyStats.totalApplicants||0} applicants</span>
+                    </div>
+                    <div className="ov-panel-body">
+                      {companyStats.totalApplicants===0? (
+                        <div className="ov-empty">No applicants yet — post a job to populate the funnel</div>
+                      ):(
+                        <Chart options={convFunnelOpts} series={convFunnelSeries} type="bar" height={220} />
+                      )}
+                    </div>
                   </div>
-                  <div className="ov-panel-body">
-                    {companyStats.totalApplicants===0? (
-                      <div className="ov-empty">No applicants yet — post a job to populate the funnel</div>
-                    ):(
-                      <Chart options={convFunnelOpts} series={convFunnelSeries} type="bar" height={220} />
-                    )}
-                  </div>
-                </div>
+                )}
 
                 {/* Applicants per Job */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Briefcase size={16} /> Applicants per Job</div>
-                    <span className="ov-panel-badge-purple">{jobs.length} job{jobs.length!==1? 's':''}</span>
+                {features['company.overview.applicants_per_job'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Briefcase size={16} /> Applicants per Job</div>
+                      <span className="ov-panel-badge-purple">{jobs.length} job{jobs.length!==1? 's':''}</span>
+                    </div>
+                    <div className="ov-panel-body">
+                      {jobs.length===0? (
+                        <div className="ov-empty">No jobs posted yet</div>
+                      ):(
+                        <Chart options={jobApplicantOpts} series={jobApplicantSeries} type="bar" height={Math.max(180, jobs.slice(0, 8).length*40)} />
+                      )}
+                    </div>
                   </div>
-                  <div className="ov-panel-body">
-                    {jobs.length===0? (
-                      <div className="ov-empty">No jobs posted yet</div>
-                    ):(
-                      <Chart options={jobApplicantOpts} series={jobApplicantSeries} type="bar" height={Math.max(180, jobs.slice(0, 8).length*40)} />
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* ═══ CONVERSION RATE CARDS ═══ */}
-              <div className="ov-rates-row">
-                <div className="ov-rate-card">
-                  <div className="ov-rate-icon" style={{background: 'rgba(59,130,246,0.1)', color: '#60a5fa'}}><Users size={18} /></div>
-                  <div className="ov-rate-info">
-                    <span className="ov-rate-value">{interviewRate}%</span>
-                    <span className="ov-rate-label">Interview Rate</span>
+              {features['company.overview.conversion_rates'] !== false && (
+                <div className="ov-rates-row">
+                  <div className="ov-rate-card">
+                    <div className="ov-rate-icon" style={{background: 'rgba(59,130,246,0.1)', color: '#60a5fa'}}><Users size={18} /></div>
+                    <div className="ov-rate-info">
+                      <span className="ov-rate-value">{interviewRate}%</span>
+                      <span className="ov-rate-label">Interview Rate</span>
+                    </div>
+                    <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${interviewRate}%`, background: '#3b82f6'}} /></div>
                   </div>
-                  <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${interviewRate}%`, background: '#3b82f6'}} /></div>
-                </div>
-                <div className="ov-rate-card">
-                  <div className="ov-rate-icon" style={{background: 'rgba(34,197,94,0.1)', color: '#4ade80'}}><Award size={18} /></div>
-                  <div className="ov-rate-info">
-                    <span className="ov-rate-value">{offerRate}%</span>
-                    <span className="ov-rate-label">Offer Rate</span>
+                  <div className="ov-rate-card">
+                    <div className="ov-rate-icon" style={{background: 'rgba(34,197,94,0.1)', color: '#4ade80'}}><Award size={18} /></div>
+                    <div className="ov-rate-info">
+                      <span className="ov-rate-value">{offerRate}%</span>
+                      <span className="ov-rate-label">Offer Rate</span>
+                    </div>
+                    <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${offerRate}%`, background: '#22c55e'}} /></div>
                   </div>
-                  <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${offerRate}%`, background: '#22c55e'}} /></div>
-                </div>
-                <div className="ov-rate-card">
-                  <div className="ov-rate-icon" style={{background: 'rgba(234,179,8,0.1)', color: '#facc15'}}><TrendingUp size={18} /></div>
-                  <div className="ov-rate-info">
-                    <span className="ov-rate-value">{hireRateNum}%</span>
-                    <span className="ov-rate-label">Hire Rate</span>
+                  <div className="ov-rate-card">
+                    <div className="ov-rate-icon" style={{background: 'rgba(234,179,8,0.1)', color: '#facc15'}}><TrendingUp size={18} /></div>
+                    <div className="ov-rate-info">
+                      <span className="ov-rate-value">{hireRateNum}%</span>
+                      <span className="ov-rate-label">Hire Rate</span>
+                    </div>
+                    <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${hireRateNum}%`, background: '#eab308'}} /></div>
                   </div>
-                  <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${hireRateNum}%`, background: '#eab308'}} /></div>
                 </div>
-              </div>
+              )}
 
               {/* ═══ BOTTOM SECTION: Recent Postings & Upcoming Interviews ═══ */}
               <div className="ov-bottom-row">
                 {/* Recent Postings */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Briefcase size={16} /> Recent Postings</div>
-                    <button className="cmpd-link-btn" onClick={() => setActiveTab('jobs')}>View All <ArrowUpRight size={14} /></button>
-                  </div>
-                  <div className="ov-panel-list">
-                    {jobs.length===0? (
-                      <div className="ov-empty">No jobs posted yet</div>
-                    ):jobs.slice(0, 4).map((job) => (
-                      <div className="ov-list-item" key={job._id||job.id}>
-                        <div className="ov-list-icon"><Briefcase size={16} /></div>
-                        <div className="ov-list-info">
-                          <div className="ov-list-title">{job.title}</div>
-                          <div className="ov-list-sub">{job.department} · {job.location} · {timeAgo(job.createdAt)}</div>
-                        </div>
-                        <div className="ov-list-right">
-                          <span className="ov-applicant-pill"><Users size={12} /> {job.applicantCount||0}</span>
-                          <span className={`ov-status-badge ${job.status}`}>{job.status}</span>
-                          <button className="ov-ai-insights-btn" title="AI Insights"><Brain size={13} /> Insights</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Upcoming Interviews */}
-                <div className="ov-panel">
-                  <div className="ov-panel-header">
-                    <div className="ov-panel-title"><Calendar size={16} /> Upcoming Interviews</div>
-                    <button className="cmpd-link-btn" onClick={() => setActiveTab('interviews')}>View All <ArrowUpRight size={14} /></button>
-                  </div>
-                  <div className="ov-panel-list">
-                    {scheduledInterviews.filter(iv => iv.status==='scheduled'||iv.status==='active').length===0? (
-                      <div className="ov-empty">
-                        <Calendar size={28} style={{opacity: 0.15, marginBottom: 6}} />
-                        <span>No upcoming interviews</span>
-                      </div>
-                    ):scheduledInterviews
-                      .filter(iv => iv.status==='scheduled'||iv.status==='active')
-                      .slice(0, 4)
-                      .map((iv) => (
-                        <div className="ov-list-item" key={iv.sessionId}>
-                          <div className="ov-list-icon ov-list-icon-interview"><Video size={16} /></div>
+                {features['company.overview.recent_postings'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Briefcase size={16} /> Recent Postings</div>
+                      <button className="cmpd-link-btn" onClick={() => setActiveTab('jobs')}>View All <ArrowUpRight size={14} /></button>
+                    </div>
+                    <div className="ov-panel-list">
+                      {jobs.length===0? (
+                        <div className="ov-empty">No jobs posted yet</div>
+                      ):jobs.slice(0, 4).map((job) => (
+                        <div className="ov-list-item" key={job._id||job.id}>
+                          <div className="ov-list-icon"><Briefcase size={16} /></div>
                           <div className="ov-list-info">
-                            <div className="ov-list-title">{iv.candidateName||'Candidate'}</div>
-                            <div className="ov-list-sub">
-                              <Clock size={11} /> {iv.scheduledAt? new Date(iv.scheduledAt).toLocaleString():'TBD'}
-                              {iv.jobTitle&&<> · {iv.jobTitle}</>}
-                            </div>
+                            <div className="ov-list-title">{job.title}</div>
+                            <div className="ov-list-sub">{job.department} · {job.location} · {timeAgo(job.createdAt)}</div>
                           </div>
                           <div className="ov-list-right">
-                            <span className="ov-ai-match-badge">{Math.floor(70+Math.random()*25)}% Match</span>
-                            <button className="ov-iv-action-btn" title="View AI Report" onClick={() => setSelectedCandidate(iv)}>
-                              <FileBarChart size={14} />
-                            </button>
-                            <button className="ov-iv-action-btn ov-iv-join" title="Join Room" onClick={() => handleJoinAsRecruiter(iv.sessionId)}>
-                              <ExternalLink size={14} />
-                            </button>
+                            <span className="ov-applicant-pill"><Users size={12} /> {job.applicantCount||0}</span>
+                            <span className={`ov-status-badge ${job.status}`}>{job.status}</span>
+                            <button className="ov-ai-insights-btn" title="AI Insights"><Brain size={13} /> Insights</button>
                           </div>
                         </div>
-                      ))
-                    }
-                  </div>
-                </div>
-              </div>
-
-              {/* ═══ CANDIDATE LEADERBOARD ═══ */}
-              <div className="ov-panel ov-leaderboard-panel">
-                <div className="ov-panel-header">
-                  <div className="ov-panel-title"><Crown size={16} /> Candidate Leaderboard</div>
-                  <div className="ov-lb-controls">
-                    <select
-                      className="ov-lb-filter"
-                      value={leaderboardFilter}
-                      onChange={(e) => setLeaderboardFilter(e.target.value)}
-                    >
-                      <option value="all">All Jobs</option>
-                      {leaderboardJobs.map(j => (
-                        <option key={j.id} value={j.id}>{j.title}</option>
                       ))}
-                    </select>
-                    <span className="ov-panel-badge">{leaderboard.length} candidates</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {loadingLeaderboard? (
-                  <div className="ov-empty"><Loader size={20} className="ov-spin" /> Loading leaderboard...</div>
-                ):leaderboard.length===0? (
-                  <div className="ov-empty">
-                    <Users size={28} style={{opacity: 0.15, marginBottom: 6}} />
-                    <span>No candidates yet — applicants will appear here ranked by score</span>
-                  </div>
-                ):(
-                  <div className="ov-lb-table-wrap">
-                    <table className="ov-lb-table">
-                      <thead>
-                        <tr>
-                          <th style={{width: 48}}><Hash size={13} /></th>
-                          <th>Candidate</th>
-                          <th>Applied For</th>
-                          <th>ATS</th>
-                          <th>Skill Match</th>
-                          <th>CGPA</th>
-                          <th>Composite</th>
-                          <th>Status</th>
-                          <th style={{width: 120}}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leaderboard.map((c) => (
-                          <tr key={c.candidateId} className={c.rank<=3? `ov-lb-top${c.rank}`:''}>
-                            <td>
-                              <span className={`ov-lb-rank ${c.rank<=3? 'ov-lb-rank-top':''}`}>
-                                {c.rank<=3? <Crown size={12} />:c.rank}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="ov-lb-candidate">
-                                <div className="ov-lb-avatar">{(c.name||'?').charAt(0).toUpperCase()}</div>
-                                <div className="ov-lb-cinfo">
-                                  <span className="ov-lb-cname">{c.name}</span>
-                                  <span className="ov-lb-cemail">{c.email}</span>
-                                </div>
+                {/* Upcoming Interviews */}
+                {features['company.overview.upcoming_interviews'] !== false && (
+                  <div className="ov-panel">
+                    <div className="ov-panel-header">
+                      <div className="ov-panel-title"><Calendar size={16} /> Upcoming Interviews</div>
+                      <button className="cmpd-link-btn" onClick={() => setActiveTab('interviews')}>View All <ArrowUpRight size={14} /></button>
+                    </div>
+                    <div className="ov-panel-list">
+                      {scheduledInterviews.filter(iv => iv.status==='scheduled'||iv.status==='active').length===0? (
+                        <div className="ov-empty">
+                          <Calendar size={28} style={{opacity: 0.15, marginBottom: 6}} />
+                          <span>No upcoming interviews</span>
+                        </div>
+                      ):scheduledInterviews
+                        .filter(iv => iv.status==='scheduled'||iv.status==='active')
+                        .slice(0, 4)
+                        .map((iv) => (
+                          <div className="ov-list-item" key={iv.sessionId}>
+                            <div className="ov-list-icon ov-list-icon-interview"><Video size={16} /></div>
+                            <div className="ov-list-info">
+                              <div className="ov-list-title">{iv.candidateName||'Candidate'}</div>
+                              <div className="ov-list-sub">
+                                <Clock size={11} /> {iv.scheduledAt? new Date(iv.scheduledAt).toLocaleString():'TBD'}
+                                {iv.jobTitle&&<> · {iv.jobTitle}</>}
                               </div>
-                            </td>
-                            <td><span className="ov-lb-job">{c.jobTitle}</span></td>
-                            <td><span className={`ov-lb-score ${c.atsScore>=70? 'high':c.atsScore>=40? 'mid':'low'}`}>{c.atsScore}</span></td>
-                            <td><span className={`ov-lb-score ${c.skillMatchScore>=70? 'high':c.skillMatchScore>=40? 'mid':'low'}`}>{c.skillMatchScore}</span></td>
-                            <td className="ov-lb-cgpa">{c.cgpa>0? c.cgpa.toFixed(1):'—'}</td>
-                            <td><span className="ov-lb-composite">{c.compositeScore}</span></td>
-                            <td>
-                              <span className={`ov-status-badge ${c.status}`}>{c.status}</span>
-                            </td>
-                            <td>
-                              <div className="ov-lb-actions">
-                                {c.phone? (
-                                  <a href={`tel:${c.phone}`} className="ov-lb-call-btn" title={`Call ${c.phone}`}>
-                                    <Phone size={13} /> Call
-                                  </a>
-                                ):(
-                                  <a href={`mailto:${c.email}`} className="ov-lb-call-btn ov-lb-mail" title={`Email ${c.email}`}>
-                                    <Mail size={13} /> Email
-                                  </a>
-                                )}
-                                <button className="ov-lb-view-btn" title="View Profile" onClick={() => setSelectedCandidate({candidateId: c.candidateId, candidateName: c.name, candidateEmail: c.email})}>
-                                  <Eye size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                            <div className="ov-list-right">
+                              <span className="ov-ai-match-badge">{Math.floor(70+Math.random()*25)}% Match</span>
+                              <button className="ov-iv-action-btn" title="View AI Report" onClick={() => setSelectedCandidate(iv)}>
+                                <FileBarChart size={14} />
+                              </button>
+                              <button className="ov-iv-action-btn ov-iv-join" title="Join Room" onClick={() => handleJoinAsRecruiter(iv.sessionId)}>
+                                <ExternalLink size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
                   </div>
                 )}
               </div>
+
+              {/* ═══ CANDIDATE LEADERBOARD ═══ */}
+              {features['company.overview.leaderboard'] !== false && (
+                <div className="ov-panel ov-leaderboard-panel">
+                  <div className="ov-panel-header">
+                    <div className="ov-panel-title"><Crown size={16} /> Candidate Leaderboard</div>
+                    <div className="ov-lb-controls">
+                      <select
+                        className="ov-lb-filter"
+                        value={leaderboardFilter}
+                        onChange={(e) => setLeaderboardFilter(e.target.value)}
+                      >
+                        <option value="all">All Jobs</option>
+                        {leaderboardJobs.map(j => (
+                          <option key={j.id} value={j.id}>{j.title}</option>
+                        ))}
+                      </select>
+                      <span className="ov-panel-badge">{leaderboard.length} candidates</span>
+                    </div>
+                  </div>
+
+                  {loadingLeaderboard? (
+                    <div className="ov-empty"><Loader size={20} className="ov-spin" /> Loading leaderboard...</div>
+                  ):leaderboard.length===0? (
+                    <div className="ov-empty">
+                      <Users size={28} style={{opacity: 0.15, marginBottom: 6}} />
+                      <span>No candidates yet — applicants will appear here ranked by score</span>
+                    </div>
+                  ):(
+                    <div className="ov-lb-table-wrap">
+                      <table className="ov-lb-table">
+                        <thead>
+                          <tr>
+                            <th style={{width: 48}}><Hash size={13} /></th>
+                            <th>Candidate</th>
+                            <th>Applied For</th>
+                            <th>ATS</th>
+                            <th>Skill Match</th>
+                            <th>CGPA</th>
+                            <th>Composite</th>
+                            <th>Status</th>
+                            <th style={{width: 120}}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leaderboard.map((c) => (
+                            <tr key={c.candidateId} className={c.rank<=3? `ov-lb-top${c.rank}`:''}>
+                              <td>
+                                <span className={`ov-lb-rank ${c.rank<=3? 'ov-lb-rank-top':''}`}>
+                                  {c.rank<=3? <Crown size={12} />:c.rank}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="ov-lb-candidate">
+                                  <div className="ov-lb-avatar">{(c.name||'?').charAt(0).toUpperCase()}</div>
+                                  <div className="ov-lb-cinfo">
+                                    <span className="ov-lb-cname">{c.name}</span>
+                                    <span className="ov-lb-cemail">{c.email}</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td><span className="ov-lb-job">{c.jobTitle}</span></td>
+                              <td><span className={`ov-lb-score ${c.atsScore>=70? 'high':c.atsScore>=40? 'mid':'low'}`}>{c.atsScore}</span></td>
+                              <td><span className={`ov-lb-score ${c.skillMatchScore>=70? 'high':c.skillMatchScore>=40? 'mid':'low'}`}>{c.skillMatchScore}</span></td>
+                              <td className="ov-lb-cgpa">{c.cgpa>0? c.cgpa.toFixed(1):'—'}</td>
+                              <td><span className="ov-lb-composite">{c.compositeScore}</span></td>
+                              <td>
+                                <span className={`ov-status-badge ${c.status}`}>{c.status}</span>
+                              </td>
+                              <td>
+                                <div className="ov-lb-actions">
+                                  {c.phone? (
+                                    <a href={`tel:${c.phone}`} className="ov-lb-call-btn" title={`Call ${c.phone}`}>
+                                      <Phone size={13} /> Call
+                                    </a>
+                                  ):(
+                                    <a href={`mailto:${c.email}`} className="ov-lb-call-btn ov-lb-mail" title={`Email ${c.email}`}>
+                                      <Mail size={13} /> Email
+                                    </a>
+                                  )}
+                                  <button className="ov-lb-view-btn" title="View Profile" onClick={() => setSelectedCandidate({candidateId: c.candidateId, candidateName: c.name, candidateEmail: c.email})}>
+                                    <Eye size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -1244,12 +1275,16 @@ function CompanyDashboard()
                         <input type="number" min="0" max="100" value={shortlistThreshold} onChange={(e) => setShortlistThreshold(parseInt(e.target.value)||0)} className="ats-threshold-input" />
                         <span className="ats-threshold-pct">%</span>
                       </div>
-                      <button className="ats-btn ats-btn-shortlist" onClick={() => handleBulkShortlist(selectedJobApplicants)} disabled={shortlisting}>
-                        <CheckCircle2 size={14} /> {shortlisting? 'Processing...':'Bulk Shortlist'}
-                      </button>
-                      <button className="ats-btn ats-btn-rescore" onClick={() => handleRescore(selectedJobApplicants)} disabled={rescoring}>
-                        <RefreshCw size={14} className={rescoring? 'spin':''} /> {rescoring? 'Rescoring...':'Re-score All'}
-                      </button>
+                      {features['company.candidates.bulk_shortlist'] !== false && (
+                        <button className="ats-btn ats-btn-shortlist" onClick={() => handleBulkShortlist(selectedJobApplicants)} disabled={shortlisting}>
+                          <CheckCircle2 size={14} /> {shortlisting? 'Processing...':'Bulk Shortlist'}
+                        </button>
+                      )}
+                      {features['company.candidates.rescore'] !== false && (
+                        <button className="ats-btn ats-btn-rescore" onClick={() => handleRescore(selectedJobApplicants)} disabled={rescoring}>
+                          <RefreshCw size={14} className={rescoring? 'spin':''} /> {rescoring? 'Rescoring...':'Re-score All'}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1334,7 +1369,7 @@ function CompanyDashboard()
                                   {c.resumeUrl&&(
                                     <a className="ats-act-btn resume" href={c.resumeUrl} target="_blank" rel="noopener noreferrer" title="View Resume" onClick={(e) => e.stopPropagation()}><FileText size={14} /></a>
                                   )}
-                                  {c.status!=='interview'&&c.status!=='rejected'&&c.eligible&&(
+                                  {c.status!=='interview'&&c.status!=='rejected'&&c.eligible&&features['company.candidates.schedule_interview'] !== false&&(
                                     <button className="ats-act-btn schedule" onClick={() => handleScheduleInterview(c, selectedJobApplicants, c.id)} disabled={schedulingCandidate===c.candidate?.id} title="Schedule Interview">
                                       <Video size={14} />
                                     </button>
@@ -1351,12 +1386,19 @@ function CompanyDashboard()
                 </>
               ):(
                 /* Job-wise view (All Jobs selected) */
-                <div className="ats-overview-grid">
-                  {loadingAllCandidates? (
-                    <div className="ats-loading-state">
-                      <Loader size={28} className="spin" />
-                      <span>Loading candidates across all jobs...</span>
-                    </div>
+                features['company.candidates.job_wise_view'] === false ? (
+                  <div className="ats-empty-state">
+                    <Users size={48} />
+                    <h3>Job-wise Overview Disabled</h3>
+                    <p>The job-wise overview is disabled by the administrator. Please select a specific job to view applicants.</p>
+                  </div>
+                ) : (
+                  <div className="ats-overview-grid">
+                    {loadingAllCandidates? (
+                      <div className="ats-loading-state">
+                        <Loader size={28} className="spin" />
+                        <span>Loading candidates across all jobs...</span>
+                      </div>
                   ):Object.keys(jobWiseCandidates).length===0? (
                     <div className="ats-empty-state">
                       <Users size={48} />
@@ -1443,7 +1485,7 @@ function CompanyDashboard()
                                 {c.resumeUrl&&(
                                   <a className="ats-act-btn resume" href={c.resumeUrl} target="_blank" rel="noopener noreferrer" title="View Resume" onClick={(e) => e.stopPropagation()}><FileText size={14} /></a>
                                 )}
-                                {c.status!=='interview'&&c.status!=='rejected'&&c.eligible!==false&&(
+                                {c.status!=='interview'&&c.status!=='rejected'&&c.eligible!==false&&features['company.candidates.schedule_interview'] !== false&&(
                                   <button className="ats-act-btn schedule" onClick={(e) => {e.stopPropagation(); handleScheduleInterview(c, jobId, c.id);}} disabled={schedulingCandidate===c.candidate?.id} title="Schedule Interview">
                                     <Video size={14} />
                                   </button>
@@ -1457,6 +1499,7 @@ function CompanyDashboard()
                     </div>
                   ))}
                 </div>
+                )
               )}
             </>
           )}
@@ -1470,12 +1513,16 @@ function CompanyDashboard()
                   <p>Create and manage quizzes for each hiring round</p>
                 </div>
                 <div style={{display: 'flex', gap: '10px'}}>
-                  <button className="cmpd-btn-secondary" onClick={() => navigate('/quiz/dashboard')}>
-                    <Settings size={16} /> Full Quiz Manager
-                  </button>
-                  <button className="cmpd-btn-primary" onClick={() => setShowCreateQuiz(true)}>
-                    <Plus size={16} /> Create Quiz
-                  </button>
+                  {features['company.quiz.full_manager'] !== false && (
+                    <button className="cmpd-btn-secondary" onClick={() => navigate('/quiz/dashboard')}>
+                      <Settings size={16} /> Full Quiz Manager
+                    </button>
+                  )}
+                  {features['company.quiz.create_wizard'] !== false && (
+                    <button className="cmpd-btn-primary" onClick={() => setShowCreateQuiz(true)}>
+                      <Plus size={16} /> Create Quiz
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1683,10 +1730,10 @@ function CompanyDashboard()
                           {q.questionCount>0&&<button className="cmpd-btn-primary cmpd-btn-sm" onClick={async () => {try {await fetch(`${import.meta.env.VITE_API_URL||'http://localhost:5000'}/api/quiz/${q.id}/publish`, {method: 'POST', credentials: 'include'}); fetchCompanyQuizzes();} catch {} }}>Publish</button>}
                         </>
                       )}
-                      {q.status==='waiting'&&(
+                      {q.status==='waiting'&&features['company.quiz.host'] !== false&&(
                         <button className="cmpd-btn-primary cmpd-btn-sm" onClick={() => navigate(`/quiz/host/${q.id}`)}><PlayCircle size={14} /> Open Lobby</button>
                       )}
-                      {['active', 'question_open', 'question_closed'].includes(q.status)&&(
+                      {['active', 'question_open', 'question_closed'].includes(q.status)&&features['company.quiz.host'] !== false&&(
                         <button className="cmpd-btn-primary cmpd-btn-sm" onClick={() => navigate(`/quiz/host/${q.id}`)}><PlayCircle size={14} /> Rejoin Live</button>
                       )}
                       {q.status==='completed'&&(
@@ -1711,9 +1758,11 @@ function CompanyDashboard()
                   <button className="cmpd-btn-secondary" onClick={() => navigate('/contest/dashboard')}>
                     <Settings size={16} /> Full Contest Manager
                   </button>
-                  <button className="cmpd-btn-primary" onClick={() => setShowCreateContest(true)}>
-                    <Plus size={16} /> Create Contest
-                  </button>
+                  {features['company.contest.create_wizard'] !== false && (
+                    <button className="cmpd-btn-primary" onClick={() => setShowCreateContest(true)}>
+                      <Plus size={16} /> Create Contest
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1919,10 +1968,10 @@ function CompanyDashboard()
                           {c.challengeCount>0&&<button className="cmpd-btn-primary cmpd-btn-sm" style={{background: '#10b981'}} onClick={async () => {try {await fetch(`${API_URL}/api/contest/${c.id}/publish`, {method: 'POST', credentials: 'include'}); fetchCompanyContests();} catch {} }}>Publish</button>}
                         </>
                       )}
-                      {c.status==='waiting'&&(
+                      {c.status==='waiting'&&features['company.contest.host'] !== false&&(
                         <button className="cmpd-btn-primary cmpd-btn-sm" style={{background: '#10b981'}} onClick={() => navigate(`/contest/host/${c.id}`)}><PlayCircle size={14} /> Open Lobby</button>
                       )}
-                      {c.status==='active'&&(
+                      {c.status==='active'&&features['company.contest.host'] !== false&&(
                         <button className="cmpd-btn-primary cmpd-btn-sm" style={{background: '#10b981'}} onClick={() => navigate(`/contest/host/${c.id}`)}><PlayCircle size={14} /> Rejoin Live</button>
                       )}
                       {c.status==='completed'&&(
@@ -1949,67 +1998,74 @@ function CompanyDashboard()
               </div>
 
               {/* Scheduled Interviews Table */}
-              <div className="cmpd-table-card" style={{marginBottom: '1.5rem'}}>
-                <div className="cmpd-card-header" style={{padding: '14px 20px', borderBottom: '1px solid var(--border-color, #2a2a3a)'}}>
-                  <h3 style={{display: 'flex', alignItems: 'center', gap: '8px', margin: 0}}><Video size={18} /> Scheduled Interviews ({scheduledInterviews.length})</h3>
-                </div>
-                {scheduledInterviews.length===0? (
-                  <div style={{padding: '40px', textAlign: 'center', color: 'var(--text-muted, #888)'}}>
-                    <Calendar size={32} style={{marginBottom: '8px', opacity: 0.5}} />
-                    <p>No scheduled interviews yet</p>
-                    <p style={{fontSize: '0.8rem'}}>Go to <strong>Candidates</strong> tab → select a job → click <strong>Schedule</strong> on any applicant</p>
+              {features['company.interviews.scheduled'] !== false ? (
+                <div className="cmpd-table-card" style={{marginBottom: '1.5rem'}}>
+                  <div className="cmpd-card-header" style={{padding: '14px 20px', borderBottom: '1px solid var(--border-color, #2a2a3a)'}}>
+                    <h3 style={{display: 'flex', alignItems: 'center', gap: '8px', margin: 0}}><Video size={18} /> Scheduled Interviews ({scheduledInterviews.length})</h3>
                   </div>
-                ):(
-                  <table className="cmpd-table">
-                    <thead>
-                      <tr>
-                        <th>Candidate</th>
-                        <th>Job</th>
-                        <th>Scheduled</th>
-                        <th>Duration</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {scheduledInterviews.map((iv) => (
-                        <tr key={iv.sessionId}>
-                          <td>
-                            <div className="cmpd-cand-name">
-                              <div className="cmpd-cand-avatar">{(iv.candidateName||'?').charAt(0).toUpperCase()}</div>
-                              <div>
-                                <div>{iv.candidateName}</div>
-                                <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>{iv.candidateEmail||''}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>{iv.jobTitle||'—'}</td>
-                          <td style={{fontSize: '0.85rem'}}>{iv.scheduledAt? new Date(iv.scheduledAt).toLocaleString():'—'}</td>
-                          <td>{iv.duration||30} min</td>
-                          <td><span className={`cmpd-status-pill ${iv.status}`}>{iv.status}</span></td>
-                          <td>
-                            <div className="cmpd-actions-group">
-                              {(iv.status==='scheduled'||iv.status==='active')&&(
-                                <button className="cmpd-action-btn cmpd-action-schedule" onClick={() => handleJoinAsRecruiter(iv.sessionId)}>
-                                  <PlayCircle size={14} /> Join
-                                </button>
-                              )}
-                              <button className="cmpd-action-btn" onClick={() => handleCopyLink(iv.sessionId)} title="Copy link for candidate">
-                                {copiedLink===iv.sessionId? <><CheckCircle2 size={14} /> Copied</>:<><Eye size={14} /> Copy Link</>}
-                              </button>
-                              {iv.status==='completed'&&(
-                                <button className="cmpd-action-btn" onClick={() => navigate(`/interview-report/${iv.sessionId}?role=recruiter`)}>
-                                  <FileText size={14} /> Report
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                  {scheduledInterviews.length===0? (
+                    <div style={{padding: '40px', textAlign: 'center', color: 'var(--text-muted, #888)'}}>
+                      <Calendar size={32} style={{marginBottom: '8px', opacity: 0.5}} />
+                      <p>No scheduled interviews yet</p>
+                      <p style={{fontSize: '0.8rem'}}>Go to <strong>Candidates</strong> tab → select a job → click <strong>Schedule</strong> on any applicant</p>
+                    </div>
+                  ):(
+                    <table className="cmpd-table">
+                      <thead>
+                        <tr>
+                          <th>Candidate</th>
+                          <th>Job</th>
+                          <th>Scheduled</th>
+                          <th>Duration</th>
+                          <th>Status</th>
+                          <th>Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                      </thead>
+                      <tbody>
+                        {scheduledInterviews.map((iv) => (
+                          <tr key={iv.sessionId}>
+                            <td>
+                              <div className="cmpd-cand-name">
+                                <div className="cmpd-cand-avatar">{(iv.candidateName||'?').charAt(0).toUpperCase()}</div>
+                                <div>
+                                  <div>{iv.candidateName}</div>
+                                  <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>{iv.candidateEmail||''}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{iv.jobTitle||'—'}</td>
+                            <td style={{fontSize: '0.85rem'}}>{iv.scheduledAt? new Date(iv.scheduledAt).toLocaleString():'—'}</td>
+                            <td>{iv.duration||30} min</td>
+                            <td><span className={`cmpd-status-pill ${iv.status}`}>{iv.status}</span></td>
+                            <td>
+                              <div className="cmpd-actions-group">
+                                {(iv.status==='scheduled'||iv.status==='active')&&(
+                                  <button className="cmpd-action-btn cmpd-action-schedule" onClick={() => handleJoinAsRecruiter(iv.sessionId)}>
+                                    <PlayCircle size={14} /> Join
+                                  </button>
+                                )}
+                                <button className="cmpd-action-btn" onClick={() => handleCopyLink(iv.sessionId)} title="Copy link for candidate">
+                                  {copiedLink===iv.sessionId? <><CheckCircle2 size={14} /> Copied</>:<><Eye size={14} /> Copy Link</>}
+                                </button>
+                                {iv.status==='completed'&&(
+                                  <button className="cmpd-action-btn" onClick={() => navigate(`/interview-report/${iv.sessionId}?role=recruiter`)}>
+                                    <FileText size={14} /> Report
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ) : (
+                <div className="cmpd-table-card" style={{marginBottom: '1.5rem', padding: '40px', textAlign: 'center', color: 'var(--text-muted, #888)'}}>
+                  <Calendar size={32} style={{marginBottom: '8px', opacity: 0.2}} />
+                  <p>Scheduled Interviews list is disabled by the administrator.</p>
+                </div>
+              )}
 
               <div className="cmpd-interview-grid">
                 <div className="cmpd-card">

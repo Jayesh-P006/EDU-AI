@@ -1635,3 +1635,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE MANAGEMENT TAB
+   ═══════════════════════════════════════════════════════════════ */
+.adm-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.55rem;
+}
+
+.adm-feature-card {
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.adm-feature-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 740px) {
+  .adm-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}

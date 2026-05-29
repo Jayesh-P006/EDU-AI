@@ -99,7 +99,7 @@ async function sendEmail(to, subject, text, html, retryCount=3)
         try
         {
             const info=await transporter.sendMail({
-                from: `"RecruitAI" <${fromAddress}>`,
+                from: `"EDU-AI" <${fromAddress}>`,
                 to: addresses.join(', '),
                 subject,
                 text,

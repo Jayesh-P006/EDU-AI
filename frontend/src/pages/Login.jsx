@@ -171,7 +171,7 @@ function Login()
             <Shield size={24} />
           </div>
           <h1>Welcome Back</h1>
-          <p>Sign in to continue to RecruitAI</p>
+          <p>Sign in to continue to EDU-AI</p>
         </div>
 
         {/* Mode Tabs */}

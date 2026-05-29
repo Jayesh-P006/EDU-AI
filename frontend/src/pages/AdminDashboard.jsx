@@ -3,7 +3,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {
   Shield, Users, Building2, Briefcase,
   AlertTriangle, LogOut, RefreshCw, Search, Filter, SlidersHorizontal, Radar, BarChart3,
-  Eye, UserRoundSearch, Pencil, Trash2, Power, X, Megaphone, Send, Bell, CheckCircle,
+  Eye, UserRoundSearch, Pencil, Trash2, Power, X, Megaphone, Send, Bell, CheckCircle, ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import api from '../services/api';
 import BrandLogo from '../components/BrandLogo';
@@ -20,6 +20,7 @@ const TABS=[
   {id: 'jobs', label: 'Jobs', icon: <Briefcase size={16} />},
   {id: 'flags', label: 'Proctoring Flags', icon: <AlertTriangle size={16} />},
   {id: 'announcements', label: 'Announcements', icon: <Megaphone size={16} />},
+  {id: 'features', label: 'Features', icon: <ToggleLeft size={16} />},
 ];
 
 const JOB_STATUS_OPTIONS=[
@@ -169,6 +170,11 @@ function AdminDashboard()
   const [announcementsLoading, setAnnouncementsLoading]=useState(false);
   const [announcementForm, setAnnouncementForm]=useState({title: '', message: '', audience: 'all', priority: 'normal'});
   const [announcementSending, setAnnouncementSending]=useState(false);
+
+  // Feature config state
+  const [featureConfig, setFeatureConfig]=useState({company: {}, student: {}});
+  const [featureConfigLoading, setFeatureConfigLoading]=useState(false);
+  const [featureConfigSaving, setFeatureConfigSaving]=useState(false);
 
   useEffect(() =>
   {
@@ -1136,7 +1142,63 @@ function AdminDashboard()
   useEffect(() =>
   {
     if (activeTab==='announcements') fetchAnnouncements();
+    if (activeTab==='features') fetchFeatureConfig();
   }, [activeTab]);
+
+  /* ── Feature Config CRUD ───────────────────────────────────── */
+  const fetchFeatureConfig=async () =>
+  {
+    try
+    {
+      setFeatureConfigLoading(true);
+      const res=await api.get('/feature-config');
+      if (res.data?.success)
+      {
+        setFeatureConfig({company: res.data.company||{}, student: res.data.student||{}});
+      }
+    } catch (err)
+    {
+      console.error('[ADMIN] Failed to fetch feature config:', err.message);
+    } finally
+    {
+      setFeatureConfigLoading(false);
+    }
+  };
+
+  const handleFeatureToggle=(role, featureId) =>
+  {
+    setFeatureConfig(prev =>
+    {
+      const current=prev[role]||{};
+      const isCurrentlyEnabled=current[featureId]!==false;
+      return {
+        ...prev,
+        [role]: {...current, [featureId]: !isCurrentlyEnabled},
+      };
+    });
+  };
+
+  const handleSaveFeatureConfig=async () =>
+  {
+    try
+    {
+      setFeatureConfigSaving(true);
+      await api.put('/feature-config', featureConfig);
+      alert('Feature configuration saved successfully!');
+    } catch (err)
+    {
+      console.error('[ADMIN] Failed to save feature config:', err.message);
+      alert('Failed to save feature configuration');
+    } finally
+    {
+      setFeatureConfigSaving(false);
+    }
+  };
+
+  const handleResetRole=(role) =>
+  {
+    setFeatureConfig(prev => ({...prev, [role]: {}}));
+  };
 
   const handleCreateAnnouncement=async () =>
   {
@@ -2401,6 +2463,216 @@ function AdminDashboard()
               </section>
             )}
 
+          {/* FEATURES TAB */}
+          {activeTab==='features'&&(
+            <div>
+              <h2 className="adm-section-title">Feature Management</h2>
+              <p className="adm-subtitle">Control which features are available to Company and Student dashboards. Disabled features will be hidden from those users.</p>
+
+              {featureConfigLoading?(
+                <div className="adm-loading">Loading feature configuration...</div>
+              ):(
+                <>
+                  <div style={{display:'flex',gap:'12px',marginBottom:'1.5rem',flexWrap:'wrap'}}>
+                    <button className="adm-btn adm-btn-primary" onClick={handleSaveFeatureConfig} disabled={featureConfigSaving}
+                      style={{display:'flex',alignItems:'center',gap:'6px',padding:'10px 20px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:600}}>
+                      <CheckCircle size={16} /> {featureConfigSaving?'Saving...':'Save All Changes'}
+                    </button>
+                    <button onClick={()=>handleResetRole('company')}
+                      style={{padding:'10px 16px',background:'transparent',color:'#94a3b8',border:'1px solid #334155',borderRadius:'8px',cursor:'pointer',fontSize:'0.85rem'}}>
+                      Reset Company to All Enabled
+                    </button>
+                    <button onClick={()=>handleResetRole('student')}
+                      style={{padding:'10px 16px',background:'transparent',color:'#94a3b8',border:'1px solid #334155',borderRadius:'8px',cursor:'pointer',fontSize:'0.85rem'}}>
+                      Reset Student to All Enabled
+                    </button>
+                  </div>
+
+                  {/* ═══ COMPANY FEATURES ═══ */}
+                  <div className="adm-panel" style={{marginBottom:'1.5rem'}}>
+                    <h3 style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'1rem'}}><Building2 size={18}/> Company Dashboard Features</h3>
+
+                    {/* Overview Group */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Overview Tab</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'company.overview.kpi_cards',label:'KPI Cards with Sparklines',desc:'Active Jobs, Applicants, Offered, Hire Rate'},
+                          {id:'company.overview.ai_fit_score',label:'AI Fit Score',desc:'Radial bar gauge of average AI fit'},
+                          {id:'company.overview.hiring_pipeline',label:'Hiring Pipeline Funnel',desc:'Applied → Assessment → Interview → Offered → Hired'},
+                          {id:'company.overview.skill_gap_radar',label:'AI Skill Gap Radar',desc:'Required vs Candidate Pool skill comparison'},
+                          {id:'company.overview.assessment_heatmap',label:'Assessment Heatmap',desc:'Role × Assessment type performance matrix'},
+                          {id:'company.overview.hiring_funnel',label:'Hiring Funnel (Real Data)',desc:'Horizontal bar with real pipeline data'},
+                          {id:'company.overview.applicants_per_job',label:'Applicants per Job Chart',desc:'Bar chart of applicant distribution'},
+                          {id:'company.overview.conversion_rates',label:'Conversion Rate Cards',desc:'Interview, Offer, and Hire rate progress bars'},
+                          {id:'company.overview.recent_postings',label:'Recent Job Postings',desc:'Last 4 job postings with AI insights'},
+                          {id:'company.overview.upcoming_interviews',label:'Upcoming Interviews',desc:'Scheduled interview list with join buttons'},
+                          {id:'company.overview.leaderboard',label:'Candidate Leaderboard',desc:'Ranked table of top candidates'},
+                          {id:'company.overview.scoring_link',label:'Scoring & Rankings Link',desc:'Link to external scoring page'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="company" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Candidates/ATS Group */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Candidates & ATS</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'company.candidates.ats_screening',label:'ATS Screening',desc:'AI-powered applicant tracking with scores'},
+                          {id:'company.candidates.bulk_shortlist',label:'Bulk Shortlist',desc:'Auto-shortlist above threshold score'},
+                          {id:'company.candidates.rescore',label:'Re-score All',desc:'Re-run ATS scoring on all applicants'},
+                          {id:'company.candidates.schedule_interview',label:'Schedule Interview',desc:'Schedule recruiter interviews for candidates'},
+                          {id:'company.candidates.job_wise_view',label:'Job-wise Candidate Cards',desc:'Card grid view when All Jobs selected'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="company" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quiz & Contest Group */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Quiz & Contest</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'company.quiz.management',label:'Quiz Management',desc:'Create, view, manage quizzes'},
+                          {id:'company.quiz.create_wizard',label:'Quiz Creation Wizard',desc:'AI-powered 3-step quiz creation'},
+                          {id:'company.quiz.host',label:'Quiz Hosting',desc:'Live quiz hosting page'},
+                          {id:'company.quiz.full_manager',label:'Full Quiz Manager',desc:'Advanced quiz dashboard'},
+                          {id:'company.contest.management',label:'Contest Management',desc:'Create, view, manage coding contests'},
+                          {id:'company.contest.create_wizard',label:'Contest Creation Wizard',desc:'AI-powered contest creation'},
+                          {id:'company.contest.host',label:'Contest Hosting',desc:'Live contest hosting page'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="company" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Interviews Group */}
+                    <div>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Interviews</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'company.interviews.start',label:'Start Interview',desc:'Create and join live interview rooms'},
+                          {id:'company.interviews.scheduled',label:'Scheduled Interviews',desc:'View and manage scheduled interviews'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="company" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ═══ STUDENT FEATURES ═══ */}
+                  <div className="adm-panel">
+                    <h3 style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'1rem'}}><Users size={18}/> Student Dashboard Features</h3>
+
+                    {/* Dashboard Tab */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Dashboard Home</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.dashboard.stats',label:'Dashboard Stats',desc:'Applied, Assessments, Pending, Available KPIs'},
+                          {id:'student.dashboard.profile_card',label:'Profile Card',desc:'Profile summary with stats and completion bar'},
+                          {id:'student.dashboard.recommended_jobs',label:'Recommended Jobs',desc:'Top 5 available jobs with quick apply'},
+                          {id:'student.dashboard.my_applications',label:'My Applications',desc:'Recent applications with status tracking'},
+                          {id:'student.dashboard.quick_actions',label:'Quick Actions Grid',desc:'Action cards linking to all features'},
+                          {id:'student.dashboard.assessments',label:'My Assessments',desc:'Company-assigned assessment list'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Jobs Tab */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Jobs</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.jobs.kanban',label:'Kanban Board',desc:'Application status kanban view'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quiz & Contest */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Quiz & Contest</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.quiz.browse',label:'Browse Quizzes',desc:'Auto-refreshing list of available quizzes'},
+                          {id:'student.quiz.join_by_code',label:'Join Quiz by Code',desc:'Enter room code to join quiz'},
+                          {id:'student.contest.browse',label:'Browse Contests',desc:'Auto-refreshing list of coding contests'},
+                          {id:'student.contest.join_by_code',label:'Join Contest by Code',desc:'Enter contest code to join'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Interview */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Interviews</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.recruiter.scheduled',label:'Scheduled Interviews',desc:'View scheduled interviews with join buttons'},
+                          {id:'student.recruiter.join',label:'Join Interview',desc:'Enter interview code to join session'},
+                          {id:'student.recruiter.quick_join',label:'Quick Join (Demo)',desc:'Quick join a demo session'},
+                          {id:'student.recruiter.features',label:'Interview Features Info',desc:'Feature info cards'},
+                          {id:'student.recruiter.tips',label:'Interview Tips',desc:'Preparation tip cards'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Practice & Coding */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>Practice & Coding</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.practice.setup',label:'Practice Interview Setup',desc:'Multi-step interview practice config'},
+                          {id:'student.coding.practice',label:'Coding Practice',desc:'LeetCode-style coding environment'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Features */}
+                    <div style={{marginBottom:'1.2rem'}}>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>AI-Powered Features</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.ai_interview.setup',label:'AI Interview',desc:'AI-powered mock interview session'},
+                          {id:'student.ai_calling.phone_interview',label:'AI Phone Interview',desc:'AI voice call via Twilio'},
+                          {id:'student.axiom.chat',label:'Spec AI Chat',desc:'AI career guidance assistant'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* External Pages */}
+                    <div>
+                      <h4 style={{fontSize:'0.85rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'0.6rem'}}>External Pages</h4>
+                      <div className="adm-feature-grid">
+                        {[
+                          {id:'student.resume_verification',label:'Resume Verification',desc:'3-layer resume verification system'},
+                          {id:'student.results',label:'My Results',desc:'Scores, rankings & leaderboard'},
+                          {id:'student.analytics',label:'Deep Analytics',desc:'Visual analytics & insights dashboard'},
+                        ].map(f=>(
+                          <FeatureToggleCard key={f.id} feature={f} role="student" config={featureConfig} onToggle={handleFeatureToggle}/>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           </div>
         )}
       </main>
@@ -2556,3 +2828,49 @@ function AdminDashboard()
 }
 
 export default AdminDashboard;
+
+/* ── Feature Toggle Card (used in Features tab) ───────────────── */
+function FeatureToggleCard({feature, role, config, onToggle})
+{
+  const isEnabled=config[role]?.[feature.id]!==false;
+
+  return (
+    <div
+      className={`adm-feature-card ${isEnabled?'enabled':'disabled'}`}
+      onClick={()=>onToggle(role, feature.id)}
+      style={{
+        display:'flex', alignItems:'center', gap:'14px',
+        padding:'14px 18px', borderRadius:'12px', cursor:'pointer',
+        background:isEnabled?'rgba(99,102,241,0.06)':'rgba(239,68,68,0.04)',
+        border:`1px solid ${isEnabled?'rgba(99,102,241,0.2)':'rgba(239,68,68,0.15)'}`,
+        transition:'all 0.2s',
+      }}
+    >
+      <div style={{
+        width:'44px', height:'26px', borderRadius:'13px', position:'relative',
+        background:isEnabled?'#6366f1':'#334155', transition:'background 0.25s', flexShrink:0,
+      }}>
+        <div style={{
+          width:'20px', height:'20px', borderRadius:'50%', background:'#fff',
+          position:'absolute', top:'3px', left:isEnabled?'21px':'3px',
+          transition:'left 0.25s', boxShadow:'0 1px 3px rgba(0,0,0,0.3)',
+        }} />
+      </div>
+      <div style={{flex:1, minWidth:0}}>
+        <div style={{fontWeight:600, fontSize:'0.9rem', color:isEnabled?'#e2e8f0':'#94a3b8'}}>
+          {feature.label}
+        </div>
+        <div style={{fontSize:'0.78rem', color:'#64748b', marginTop:'2px', lineHeight:'1.35'}}>
+          {feature.desc}
+        </div>
+      </div>
+      <span style={{
+        fontSize:'0.72rem', fontWeight:600, padding:'3px 8px', borderRadius:'6px',
+        background:isEnabled?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.12)',
+        color:isEnabled?'#4ade80':'#f87171', flexShrink:0,
+      }}>
+        {isEnabled?'ON':'OFF'}
+      </span>
+    </div>
+  );
+}

@@ -13,6 +13,7 @@ import Chart from 'react-apexcharts';
 import html2canvas from 'html2canvas';
 import {jsPDF} from 'jspdf';
 import api from '../services/api';
+import {useFeature} from '../services/FeatureContext';
 import './CandidateAnalytics.css';
 
 /* ─── colour helpers ─── */
@@ -117,12 +118,23 @@ function Reveal({children, delay=0, className=''})
 export default function CandidateAnalytics()
 {
   const navigate=useNavigate();
+  const isEnabled=useFeature('student.analytics');
+
   const dashboardRef=useRef(null);
   const [user, setUser]=useState(null);
   const [data, setData]=useState(null);
   const [loading, setLoading]=useState(true);
   const [pdfLoading, setPdfLoading]=useState(false);
   const [activeSection, setActiveSection]=useState('overview');
+
+  /* redirect if feature disabled */
+  useEffect(() =>
+  {
+    if (!isEnabled)
+    {
+      navigate('/candidate-dashboard');
+    }
+  }, [isEnabled, navigate]);
 
   /* auth */
   useEffect(() =>
@@ -305,7 +317,7 @@ export default function CandidateAnalytics()
       <nav className="ca-navbar">
         <div className="ca-navbar-inner">
           <Link to="/candidate-dashboard" className="ca-logo">
-            <Sparkles size={20} /> RecruitAI
+            <Sparkles size={20} /> EDU-AI
           </Link>
           <div className="ca-nav-pills">
             {NAV.map(n => (
@@ -713,7 +725,7 @@ export default function CandidateAnalytics()
 
           {/* Footer */}
           <div className="ca-footer">
-            <span>RecruitAI Analytics · Generated {new Date().toLocaleDateString()}</span>
+            <span>EDU-AI Analytics · Generated {new Date().toLocaleDateString()}</span>
           </div>
         </div>
       </main>

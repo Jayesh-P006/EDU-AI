@@ -132,7 +132,7 @@ function Navbar()
             <div className="container navbar-inner">
                 <motion.div className="navbar-brand" whileHover={{scale: 1.05}}>
                     <TargetIcon size={22} />
-                    <span>RecruitAI</span>
+                    <span>EDU-AI</span>
                 </motion.div>
                 <div className="navbar-links">
                     <a href="#features">Features</a>
@@ -373,7 +373,7 @@ function Home()
                         animate={{opacity: 1, y: 0}}
                         transition={{duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94]}}
                     >
-                        <Typewriter text="Next-Gen Interview" delay={800} speed={55} onDone={() => setLine1Done(true)} />
+                        <Typewriter text="AI Powered Learning & Placement" delay={800} speed={55} onDone={() => setLine1Done(true)} />
                         <br />
                         <span className="hero-title-accent">
                             {line1Done&&<Typewriter text="Platform" delay={200} speed={70} onDone={() => setLine2Done(true)} />}
@@ -482,7 +482,7 @@ function Home()
                         <div className="cta-banner">
                             <div className="cta-banner-glow" />
                             <h2>Ready to Transform Your Hiring?</h2>
-                            <p>Join thousands of teams already using RecruitAI to find the best talent.</p>
+                            <p>Join thousands of teams already using EDU-AI to find the best talent.</p>
                             <motion.button
                                 className="btn btn-primary btn-large"
                                 onClick={() => navigate('/register')}
@@ -503,7 +503,7 @@ function Home()
                         <div className="footer-content">
                             <div className="footer-brand">
                                 <TargetIcon size={24} />
-                                <span>RecruitAI</span>
+                                <span>EDU-AI</span>
                             </div>
                             <p className="footer-text">AI-powered interview platform for modern hiring</p>
                             <div className="footer-links">

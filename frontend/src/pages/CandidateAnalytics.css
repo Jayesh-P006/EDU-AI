@@ -40,8 +40,7 @@
 }
 .ca-logo {
   font-size: 20px; font-weight: 800;
-  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  color: #ffffff;
   text-decoration: none; display: flex; align-items: center; gap: 8px;
 }
 .ca-logo svg { -webkit-text-fill-color: initial; color: #a855f7; }

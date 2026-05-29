@@ -13,6 +13,7 @@ import
   Cell,
 } from 'recharts';
 import api from '../services/api';
+import {useFeature} from '../services/FeatureContext';
 import './CandidateResults.css';
 
 function scoreColor(score)
@@ -53,11 +54,21 @@ const SECTION_CHART_COLORS=['#6366f1', '#a855f7', '#14b8a6', '#f59e0b', '#ec4899
 export default function CandidateResults()
 {
   const navigate=useNavigate();
+  const isEnabled=useFeature('student.results');
+
   const [user, setUser]=useState(null);
   const [results, setResults]=useState(null);
   const [leaderboard, setLeaderboard]=useState([]);
   const [loading, setLoading]=useState(true);
   const [activeTab, setActiveTab]=useState('overview'); // overview | sections | skills | leaderboard
+
+  useEffect(() =>
+  {
+    if (!isEnabled)
+    {
+      navigate('/candidate-dashboard');
+    }
+  }, [isEnabled, navigate]);
 
   useEffect(() =>
   {
@@ -140,7 +151,7 @@ export default function CandidateResults()
       {/* ── Navbar ── */}
       <nav className="cres-navbar">
         <div className="cres-navbar-inner">
-          <Link to="/candidate-dashboard" className="cres-logo">RecruitAI</Link>
+          <Link to="/candidate-dashboard" className="cres-logo">EDU-AI</Link>
           <div className="cres-nav-tabs">
             {[
               {id: 'overview', label: 'Overview', icon: <BarChart3 size={14} />},

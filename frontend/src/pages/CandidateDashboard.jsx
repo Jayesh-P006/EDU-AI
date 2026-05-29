@@ -12,6 +12,7 @@ import
   Smile, Minus, Flame, Lightbulb, ClipboardList
 } from 'lucide-react';
 import api, {getMyInterviews} from '../services/api';
+import {useFeatures} from '../services/FeatureContext';
 import CodeEditor from '../components/CodeEditor';
 import CodingPractice from './CodingPractice';
 import './CandidateDashboard.css';
@@ -23,14 +24,14 @@ const TABS=[
   {key: 'dashboard', label: 'Dashboard', icon: <BarChart3 size={16} />},
   {key: 'jobs', label: 'Jobs', icon: <Briefcase size={16} />},
   {key: 'profile', label: 'Profile', icon: <UserCheck size={16} />},
-  {key: 'quiz', label: 'Live Quiz', icon: <Trophy size={16} />},
-  {key: 'contest', label: 'Coding Contest', icon: <Terminal size={16} />},
-  {key: 'recruiter', label: 'Recruiter Interview', icon: <Video size={16} />},
-  {key: 'practice', label: 'Practice', icon: <Dumbbell size={16} />},
-  {key: 'coding', label: 'Coding Practice', icon: <Code size={16} />},
-  {key: 'ai-interview', label: 'AI Interview', icon: <Bot size={16} />},
-  {key: 'ai-calling', label: 'AI Calling', icon: <PhoneCall size={16} />},
-  {key: 'axiom', label: 'Spec AI', icon: <BookOpen size={16} />},
+  {key: 'quiz', label: 'Live Quiz', icon: <Trophy size={16} />, featureId: 'student.quiz.browse'},
+  {key: 'contest', label: 'Coding Contest', icon: <Terminal size={16} />, featureId: 'student.contest.browse'},
+  {key: 'recruiter', label: 'Recruiter Interview', icon: <Video size={16} />, featureId: 'student.recruiter.join'},
+  {key: 'practice', label: 'Practice', icon: <Dumbbell size={16} />, featureId: 'student.practice.setup'},
+  {key: 'coding', label: 'Coding Practice', icon: <Code size={16} />, featureId: 'student.coding.practice'},
+  {key: 'ai-interview', label: 'AI Interview', icon: <Bot size={16} />, featureId: 'student.ai_interview.setup'},
+  {key: 'ai-calling', label: 'AI Calling', icon: <PhoneCall size={16} />, featureId: 'student.ai_calling.phone_interview'},
+  {key: 'axiom', label: 'Spec AI', icon: <BookOpen size={16} />, featureId: 'student.axiom.chat'},
 ];
 
 function CandidateDashboard()
@@ -39,6 +40,10 @@ function CandidateDashboard()
   const [user, setUser]=useState(null);
   const [activeTab, setActiveTab]=useState('dashboard');
   const [searchQuery, setSearchQuery]=useState('');
+  const {features}=useFeatures();
+
+  // Filter tabs based on feature toggles (tabs without featureId are always shown)
+  const visibleTabs=TABS.filter(t => !t.featureId||features[t.featureId]!==false);
 
   useEffect(() =>
   {
@@ -74,10 +79,10 @@ function CandidateDashboard()
     <div className="cd-page">
       {/* ═══ Left Sidebar ═══ */}
       <aside className="cd-sidebar">
-        <Link to="/candidate-dashboard" className="cd-logo">RecruitAI</Link>
+        <Link to="/candidate-dashboard" className="cd-logo">EDU-AI</Link>
 
         <div className="cd-sidebar-nav">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.key}
               className={`cd-nav-tab ${activeTab===t.key? 'active':''}`}
@@ -147,6 +152,7 @@ function CandidateDashboard()
 function DashboardTab({user, initials, setActiveTab})
 {
   const navigate=useNavigate();
+  const {features}=useFeatures();
   const [stats, setStats]=useState({applied: 0, assessments: 0, pending: 0, availableJobs: 0});
   const [jobs, setJobs]=useState([]);
   const [applications, setApplications]=useState([]);
@@ -223,16 +229,18 @@ function DashboardTab({user, initials, setActiveTab})
   const quickActions=[
     {label: 'My Profile', desc: 'Update resume, skills & experience', icon: <UserCheck size={22} />, tab: 'profile', badge: 'PROFILE', link: '/candidate-profile'},
     {label: 'Browse Jobs', desc: 'Find & apply to available positions', icon: <Briefcase size={22} />, tab: 'jobs', badge: 'JOBS'},
-    {label: 'Resume Verify', desc: '3-layer resume verification system', icon: <Shield size={22} />, tab: 'verify', badge: 'VERIFY', link: '/resume-verification'},
-    {label: 'Recruiter Interview', desc: 'Join live interview with recruiter', icon: <Video size={22} />, tab: 'recruiter', badge: 'LIVE'},
-    {label: 'Practice Interview', desc: 'AI interviewer with instant feedback', icon: <Dumbbell size={22} />, tab: 'practice', badge: 'PRACTICE'},
-    {label: 'Coding Practice', desc: 'LeetCode-style problems with hints', icon: <Code size={22} />, tab: 'coding', badge: 'DSA'},
-    {label: 'AI Interview', desc: 'Full AI-powered mock interview', icon: <Bot size={22} />, tab: 'ai-interview', badge: 'AI'},
-    {label: 'AI Calling', desc: 'AI phone interview via Twilio', icon: <PhoneCall size={22} />, tab: 'ai-calling', badge: 'CALL'},
-    {label: 'Spec AI', desc: 'AI assistant for interview prep', icon: <BookOpen size={22} />, tab: 'axiom', badge: 'CHAT'},
-    {label: 'My Results', desc: 'Scores, rankings & leaderboard', icon: <Trophy size={22} />, tab: 'results', badge: 'SCORES', link: '/candidate-results'},
-    {label: 'Analytics', desc: 'Deep visual analytics & insights', icon: <BarChart3 size={22} />, tab: 'analytics', badge: 'NEW', link: '/candidate-analytics'},
+    {label: 'Resume Verify', desc: '3-layer resume verification system', icon: <Shield size={22} />, tab: 'verify', badge: 'VERIFY', link: '/resume-verification', featureId: 'student.resume_verification'},
+    {label: 'Recruiter Interview', desc: 'Join live interview with recruiter', icon: <Video size={22} />, tab: 'recruiter', badge: 'LIVE', featureId: 'student.recruiter.scheduled'},
+    {label: 'Practice Interview', desc: 'AI interviewer with instant feedback', icon: <Dumbbell size={22} />, tab: 'practice', badge: 'PRACTICE', featureId: 'student.practice.setup'},
+    {label: 'Coding Practice', desc: 'LeetCode-style problems with hints', icon: <Code size={22} />, tab: 'coding', badge: 'DSA', featureId: 'student.coding.practice'},
+    {label: 'AI Interview', desc: 'Full AI-powered mock interview', icon: <Bot size={22} />, tab: 'ai-interview', badge: 'AI', featureId: 'student.ai_interview.setup'},
+    {label: 'AI Calling', desc: 'AI phone interview via Twilio', icon: <PhoneCall size={22} />, tab: 'ai-calling', badge: 'CALL', featureId: 'student.ai_calling.phone_interview'},
+    {label: 'Spec AI', desc: 'AI assistant for interview prep', icon: <BookOpen size={22} />, tab: 'axiom', badge: 'CHAT', featureId: 'student.axiom.chat'},
+    {label: 'My Results', desc: 'Scores, rankings & leaderboard', icon: <Trophy size={22} />, tab: 'results', badge: 'SCORES', link: '/candidate-results', featureId: 'student.results'},
+    {label: 'Analytics', desc: 'Deep visual analytics & insights', icon: <BarChart3 size={22} />, tab: 'analytics', badge: 'NEW', link: '/candidate-analytics', featureId: 'student.analytics'},
   ];
+
+  const visibleQuickActions = quickActions.filter(action => !action.featureId || features[action.featureId] !== false);
 
   const timeAgo=(dateStr) =>
   {
@@ -251,132 +259,148 @@ function DashboardTab({user, initials, setActiveTab})
         <p>Here's what's happening with your job search today</p>
       </div>
 
-      <div className="cd-stats-row">
-        {statCards.map((s) => (
-          <div className="cd-stat-card" key={s.label}>
-            <div className="cd-stat-icon">{s.icon}</div>
-            <div className="cd-stat-info">
-              <span className="cd-stat-label">{s.label}</span>
-              <span className="cd-stat-value">{s.value}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="cd-grid">
-        {/* Profile Card */}
-        <div className="cd-card cd-profile-card" style={{cursor: 'pointer'}} onClick={() => navigate('/candidate-profile')}>
-          <div className="cd-profile-banner">
-            <div className="cd-profile-avatar">{initials}</div>
-          </div>
-          <div className="cd-profile-body">
-            <h3>{user.username}</h3>
-            <span className="cd-role-badge">{user.role==='candidate'? 'Candidate':user.role}</span>
-            <div className="cd-profile-stats">
-              <div><strong>{stats.applied}</strong><span>APPLIED</span></div>
-              <div><strong>{stats.assessments}</strong><span>TESTS</span></div>
-              <div><strong>{stats.availableJobs}</strong><span>AVAILABLE</span></div>
-            </div>
-            <div className="cd-progress-section">
-              <div className="cd-progress-header">
-                <span>Profile Completion</span><span>50%</span>
+      {features['student.dashboard.stats'] !== false && (
+        <div className="cd-stats-row">
+          {statCards.map((s) => (
+            <div className="cd-stat-card" key={s.label}>
+              <div className="cd-stat-icon">{s.icon}</div>
+              <div className="cd-stat-info">
+                <span className="cd-stat-label">{s.label}</span>
+                <span className="cd-stat-value">{s.value}</span>
               </div>
-              <div className="cd-progress-bar">
-                <div className="cd-progress-fill" style={{width: '50%'}}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="cd-card">
-          <div className="cd-card-header">
-            <h3><Target size={18} /> Recommended Jobs</h3>
-            <span className="cd-badge">{jobs.length} available</span>
-          </div>
-          {loadingJobs? (
-            <div className="cd-empty-state"><p>Loading jobs...</p></div>
-          ):jobs.length===0? (
-            <div className="cd-empty-state">
-              <Briefcase size={40} /><h4>No jobs found</h4><p>Try adjusting your search or check back later</p>
-            </div>
-          ):(
-            <div className="cd-jobs-list">
-              {jobs.slice(0, 5).map(job => (
-                <div className="cd-job-item" key={job.id}>
-                  <div className="cd-job-info">
-                    <strong>{job.title}</strong>
-                    <span className="cd-job-meta">
-                      <Building2 size={12} /> {job.companyName} · <MapPin size={12} /> {job.location} · <Clock size={12} /> {timeAgo(job.createdAt)}
-                    </span>
-                  </div>
-                  <div className="cd-job-actions">
-                    <span className="cd-job-type-badge">{job.type}</span>
-                    {appliedJobIds.has(job.id)? (
-                      <span className="cd-applied-badge"><CheckCircle size={14} /> Applied</span>
-                    ):(
-                      <button className="cd-apply-btn" onClick={() => openApplyModal(job.id)}>Apply</button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="cd-card">
-          <div className="cd-card-header">
-            <h3><FileText size={18} /> My Applications</h3>
-          </div>
-          {applications.length===0? (
-            <div className="cd-empty-state">
-              <FileText size={40} /><h4>No applications</h4><p>Apply to jobs to track your progress</p>
-            </div>
-          ):(
-            <div className="cd-apps-list">
-              {applications.slice(0, 5).map(app => (
-                <div className="cd-app-item" key={app.id}>
-                  <div className="cd-app-info">
-                    <strong>{app.job?.title||'Unknown Job'}</strong>
-                    <span>{app.job?.companyName} · {app.job?.location}</span>
-                  </div>
-                  <span className={`cd-app-status ${app.status}`}>{app.status}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="cd-section">
-        <div className="cd-card-header" style={{marginBottom: 20}}>
-          <h3><Award size={18} /> Quick Actions</h3>
-        </div>
-        <div className="cd-actions-grid">
-          {quickActions.map((action) => (
-            <div className="cd-action-card" key={action.label} onClick={() => action.link? navigate(action.link):setActiveTab(action.tab)}>
-              <div className="cd-action-top">
-                <div className="cd-action-icon">{action.icon}</div>
-                <span className="cd-action-badge">{action.badge}</span>
-              </div>
-              <h4>{action.label}</h4>
-              <p>{action.desc}</p>
-              <ChevronRight size={16} className="cd-action-arrow" />
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      <div className="cd-section">
-        <div className="cd-card">
-          <div className="cd-card-header">
-            <h3><BookOpen size={18} /> My Assessments</h3>
-            <span className="cd-badge">0 total</span>
+      {(features['student.dashboard.profile_card'] !== false || 
+        features['student.dashboard.recommended_jobs'] !== false || 
+        features['student.dashboard.my_applications'] !== false) && (
+        <div className="cd-grid">
+          {/* Profile Card */}
+          {features['student.dashboard.profile_card'] !== false && (
+            <div className="cd-card cd-profile-card" style={{cursor: 'pointer'}} onClick={() => navigate('/candidate-profile')}>
+              <div className="cd-profile-banner">
+                <div className="cd-profile-avatar">{initials}</div>
+              </div>
+              <div className="cd-profile-body">
+                <h3>{user.username}</h3>
+                <span className="cd-role-badge">{user.role==='candidate'? 'Candidate':user.role}</span>
+                <div className="cd-profile-stats">
+                  <div><strong>{stats.applied}</strong><span>APPLIED</span></div>
+                  <div><strong>{stats.assessments}</strong><span>TESTS</span></div>
+                  <div><strong>{stats.availableJobs}</strong><span>AVAILABLE</span></div>
+                </div>
+                <div className="cd-progress-section">
+                  <div className="cd-progress-header">
+                    <span>Profile Completion</span><span>50%</span>
+                  </div>
+                  <div className="cd-progress-bar">
+                    <div className="cd-progress-fill" style={{width: '50%'}}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {features['student.dashboard.recommended_jobs'] !== false && (
+            <div className="cd-card">
+              <div className="cd-card-header">
+                <h3><Target size={18} /> Recommended Jobs</h3>
+                <span className="cd-badge">{jobs.length} available</span>
+              </div>
+              {loadingJobs? (
+                <div className="cd-empty-state"><p>Loading jobs...</p></div>
+              ):jobs.length===0? (
+                <div className="cd-empty-state">
+                  <Briefcase size={40} /><h4>No jobs found</h4><p>Try adjusting your search or check back later</p>
+                </div>
+              ):(
+                <div className="cd-jobs-list">
+                  {jobs.slice(0, 5).map(job => (
+                    <div className="cd-job-item" key={job.id}>
+                      <div className="cd-job-info">
+                        <strong>{job.title}</strong>
+                        <span className="cd-job-meta">
+                          <Building2 size={12} /> {job.companyName} · <MapPin size={12} /> {job.location} · <Clock size={12} /> {timeAgo(job.createdAt)}
+                        </span>
+                      </div>
+                      <div className="cd-job-actions">
+                        <span className="cd-job-type-badge">{job.type}</span>
+                        {appliedJobIds.has(job.id)? (
+                          <span className="cd-applied-badge"><CheckCircle size={14} /> Applied</span>
+                        ):(
+                          <button className="cd-apply-btn" onClick={() => openApplyModal(job.id)}>Apply</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {features['student.dashboard.my_applications'] !== false && (
+            <div className="cd-card">
+              <div className="cd-card-header">
+                <h3><FileText size={18} /> My Applications</h3>
+              </div>
+              {applications.length===0? (
+                <div className="cd-empty-state">
+                  <FileText size={40} /><h4>No applications</h4><p>Apply to jobs to track your progress</p>
+                </div>
+              ):(
+                <div className="cd-apps-list">
+                  {applications.slice(0, 5).map(app => (
+                    <div className="cd-app-item" key={app.id}>
+                      <div className="cd-app-info">
+                        <strong>{app.job?.title||'Unknown Job'}</strong>
+                        <span>{app.job?.companyName} · {app.job?.location}</span>
+                      </div>
+                      <span className={`cd-app-status ${app.status}`}>{app.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {features['student.dashboard.quick_actions'] !== false && (
+        <div className="cd-section">
+          <div className="cd-card-header" style={{marginBottom: 20}}>
+            <h3><Award size={18} /> Quick Actions</h3>
           </div>
-          <div className="cd-empty-state">
-            <Shield size={40} /><h4>No assessments yet</h4><p>When companies assign assessments, they'll appear here</p>
+          <div className="cd-actions-grid">
+            {visibleQuickActions.map((action) => (
+              <div className="cd-action-card" key={action.label} onClick={() => action.link? navigate(action.link):setActiveTab(action.tab)}>
+                <div className="cd-action-top">
+                  <div className="cd-action-icon">{action.icon}</div>
+                  <span className="cd-action-badge">{action.badge}</span>
+                </div>
+                <h4>{action.label}</h4>
+                <p>{action.desc}</p>
+                <ChevronRight size={16} className="cd-action-arrow" />
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
+
+      {features['student.dashboard.assessments'] !== false && (
+        <div className="cd-section">
+          <div className="cd-card">
+            <div className="cd-card-header">
+              <h3><BookOpen size={18} /> My Assessments</h3>
+              <span className="cd-badge">0 total</span>
+            </div>
+            <div className="cd-empty-state">
+              <Shield size={40} /><h4>No assessments yet</h4><p>When companies assign assessments, they'll appear here</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Apply Modal (Resume Upload + ATS Score) ── */}
       {applyModal&&(
@@ -489,6 +513,7 @@ function DashboardTab({user, initials, setActiveTab})
    ═══════════════════════════════════════════════════════════════════ */
 function JobsTab({user})
 {
+  const {features}=useFeatures();
   const [viewMode, setViewMode]=useState('browse'); // 'browse' | 'kanban'
   const [jobs, setJobs]=useState([]);
   const [kanban, setKanban]=useState({applied: [], shortlisted: [], selected: [], rejected: []});
@@ -505,7 +530,15 @@ function JobsTab({user})
   const [atsResult, setAtsResult]=useState(null);
   const [applyLoading, setApplyLoading]=useState(false);
 
+  const showKanban = features['student.jobs.kanban'] !== false;
+
   useEffect(() => {fetchAll();}, []);
+
+  useEffect(() => {
+    if (!showKanban && viewMode === 'kanban') {
+      setViewMode('browse');
+    }
+  }, [showKanban, viewMode]);
 
   const fetchAll=async () =>
   {
@@ -625,9 +658,11 @@ function JobsTab({user})
           <button className={viewMode==='browse'? 'active':''} onClick={() => setViewMode('browse')}>
             <List size={16} /> Browse Jobs
           </button>
-          <button className={viewMode==='kanban'? 'active':''} onClick={() => setViewMode('kanban')}>
-            <Columns3 size={16} /> Kanban Board
-          </button>
+          {showKanban && (
+            <button className={viewMode==='kanban'? 'active':''} onClick={() => setViewMode('kanban')}>
+              <Columns3 size={16} /> Kanban Board
+            </button>
+          )}
         </div>
         {viewMode==='browse'&&(
           <div className="jt-filters">
@@ -1233,6 +1268,7 @@ function AICallingTab({user})
 function RecruiterInterviewTab({user})
 {
   const navigate=useNavigate();
+  const {features}=useFeatures();
   const [interviewCode, setInterviewCode]=useState('');
   const [joinLoading, setJoinLoading]=useState(false);
   const [scheduledInterviews, setScheduledInterviews]=useState([]);
@@ -1271,7 +1307,7 @@ function RecruiterInterviewTab({user})
     {icon: <Clock size={24} />, title: 'Join Early', desc: 'Try to join the interview 2-3 minutes before the scheduled time'},
   ];
 
-  const features=[
+  const featuresList=[
     {icon: <Video size={24} />, title: 'Video Interview', desc: 'Face-to-face video call with your recruiter'},
     {icon: <Code size={24} />, title: 'Live Code Editor', desc: 'Collaborative code editor for technical rounds'},
     {icon: <Shield size={24} />, title: 'AI Proctoring', desc: 'Secure & monitored interview environment'},
@@ -1286,99 +1322,117 @@ function RecruiterInterviewTab({user})
       </div>
 
       {/* Scheduled Interviews */}
-      {loadingInterviews? (
-        <div style={{textAlign: 'center', padding: '20px', color: 'var(--text-muted)'}}>
-          Loading scheduled interviews...
-        </div>
-      ):scheduledInterviews.length>0&&(
-        <div className="cdt-section" style={{marginBottom: '1.5rem'}}>
-          <h2>📅 Scheduled Interviews ({scheduledInterviews.length})</h2>
-          <div className="cdt-ri-scheduled-grid">
-            {scheduledInterviews.map(iv => (
-              <div className="cdt-ri-scheduled-card" key={iv.sessionId}>
-                <div className="cdt-ri-scheduled-header">
-                  <div>
-                    <h3>{iv.jobTitle||'Interview'}</h3>
-                    <p>{iv.companyName||''}{iv.department? ` · ${iv.department}`:''}</p>
+      {features['student.recruiter.scheduled'] !== false && (
+        <>
+          {loadingInterviews? (
+            <div style={{textAlign: 'center', padding: '20px', color: 'var(--text-muted)'}}>
+              Loading scheduled interviews...
+            </div>
+          ):scheduledInterviews.length>0&&(
+            <div className="cdt-section" style={{marginBottom: '1.5rem'}}>
+              <h2>📅 Scheduled Interviews ({scheduledInterviews.length})</h2>
+              <div className="cdt-ri-scheduled-grid">
+                {scheduledInterviews.map(iv => (
+                  <div className="cdt-ri-scheduled-card" key={iv.sessionId}>
+                    <div className="cdt-ri-scheduled-header">
+                      <div>
+                        <h3>{iv.jobTitle||'Interview'}</h3>
+                        <p>{iv.companyName||''}{iv.department? ` · ${iv.department}`:''}</p>
+                      </div>
+                      <span className={`cdt-ri-status-pill ${iv.status}`}>{iv.status}</span>
+                    </div>
+                    <div className="cdt-ri-scheduled-details">
+                      {iv.scheduledAt&&<span><Calendar size={14} /> {new Date(iv.scheduledAt).toLocaleString()}</span>}
+                      {iv.duration&&<span><Clock size={14} /> {iv.duration} min</span>}
+                      {iv.location&&<span><MapPin size={14} /> {iv.location}</span>}
+                    </div>
+                    {iv.notes&&<p className="cdt-ri-scheduled-notes">{iv.notes}</p>}
+                    <button
+                      className="cdt-ri-join-btn"
+                      onClick={() => navigate(`/interview/${iv.sessionId}?mode=candidate&name=${encodeURIComponent(user.username)}&role=candidate`)}
+                      disabled={iv.status==='completed'}
+                    >
+                      {iv.status==='completed'? '✅ Completed':iv.status==='active'? '🔴 Join Now':'🚀 Join Interview'}
+                    </button>
                   </div>
-                  <span className={`cdt-ri-status-pill ${iv.status}`}>{iv.status}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Join Interview Card */}
+      {(features['student.recruiter.join'] !== false || features['student.recruiter.quick_join'] !== false) && (
+        <div className="cdt-ri-join-card">
+          {features['student.recruiter.join'] !== false && (
+            <>
+              <div className="cdt-ri-join-left">
+                <div className="cdt-ri-join-icon"><Video size={40} /></div>
+                <div>
+                  <h2>Join Interview Session</h2>
+                  <p>Enter the interview code provided by your recruiter to join the session</p>
                 </div>
-                <div className="cdt-ri-scheduled-details">
-                  {iv.scheduledAt&&<span><Calendar size={14} /> {new Date(iv.scheduledAt).toLocaleString()}</span>}
-                  {iv.duration&&<span><Clock size={14} /> {iv.duration} min</span>}
-                  {iv.location&&<span><MapPin size={14} /> {iv.location}</span>}
-                </div>
-                {iv.notes&&<p className="cdt-ri-scheduled-notes">{iv.notes}</p>}
-                <button
-                  className="cdt-ri-join-btn"
-                  onClick={() => navigate(`/interview/${iv.sessionId}?mode=candidate&name=${encodeURIComponent(user.username)}&role=candidate`)}
-                  disabled={iv.status==='completed'}
-                >
-                  {iv.status==='completed'? '✅ Completed':iv.status==='active'? '🔴 Join Now':'🚀 Join Interview'}
+              </div>
+              <div className="cdt-ri-join-form">
+                <input
+                  type="text"
+                  placeholder="Enter interview code (e.g., INT-2024-001)"
+                  value={interviewCode}
+                  onChange={(e) => setInterviewCode(e.target.value)}
+                  onKeyDown={(e) => e.key==='Enter'&&handleJoinInterview()}
+                  className="cdt-ri-input"
+                />
+                <button className="cdt-ri-join-btn" onClick={handleJoinInterview} disabled={joinLoading}>
+                  {joinLoading? 'Joining...':'🚀 Join Interview'}
                 </button>
+              </div>
+            </>
+          )}
+          {features['student.recruiter.join'] !== false && features['student.recruiter.quick_join'] !== false && (
+            <div className="cdt-ri-divider"><span>or</span></div>
+          )}
+          {features['student.recruiter.quick_join'] !== false && (
+            <button className="cdt-ri-quick-btn" onClick={handleQuickJoin} style={features['student.recruiter.join'] === false ? {marginTop: 0} : {}}>
+              <ExternalLink size={16} /> Quick Join (Demo Session)
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Features Grid */}
+      {features['student.recruiter.features'] !== false && (
+        <div className="cdt-section">
+          <h2>Interview Features</h2>
+          <div className="cdt-ri-features-grid">
+            {featuresList.map((f, i) => (
+              <div className="cdt-ri-feature-card" key={i}>
+                <div className="cdt-ri-feature-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Join Interview Card */}
-      <div className="cdt-ri-join-card">
-        <div className="cdt-ri-join-left">
-          <div className="cdt-ri-join-icon"><Video size={40} /></div>
-          <div>
-            <h2>Join Interview Session</h2>
-            <p>Enter the interview code provided by your recruiter to join the session</p>
+      {/* Tips Section */}
+      {features['student.recruiter.tips'] !== false && (
+        <div className="cdt-section">
+          <h2>Interview Tips</h2>
+          <div className="cdt-ri-tips-grid">
+            {tips.map((tip, i) => (
+              <div className="cdt-ri-tip-card" key={i}>
+                <span className="cdt-ri-tip-icon">{tip.icon}</span>
+                <div>
+                  <h4>{tip.title}</h4>
+                  <p>{tip.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="cdt-ri-join-form">
-          <input
-            type="text"
-            placeholder="Enter interview code (e.g., INT-2024-001)"
-            value={interviewCode}
-            onChange={(e) => setInterviewCode(e.target.value)}
-            onKeyDown={(e) => e.key==='Enter'&&handleJoinInterview()}
-            className="cdt-ri-input"
-          />
-          <button className="cdt-ri-join-btn" onClick={handleJoinInterview} disabled={joinLoading}>
-            {joinLoading? 'Joining...':'🚀 Join Interview'}
-          </button>
-        </div>
-        <div className="cdt-ri-divider"><span>or</span></div>
-        <button className="cdt-ri-quick-btn" onClick={handleQuickJoin}>
-          <ExternalLink size={16} /> Quick Join (Demo Session)
-        </button>
-      </div>
-
-      {/* Features Grid */}
-      <div className="cdt-section">
-        <h2>Interview Features</h2>
-        <div className="cdt-ri-features-grid">
-          {features.map((f, i) => (
-            <div className="cdt-ri-feature-card" key={i}>
-              <div className="cdt-ri-feature-icon">{f.icon}</div>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tips Section */}
-      <div className="cdt-section">
-        <h2>Interview Tips</h2>
-        <div className="cdt-ri-tips-grid">
-          {tips.map((tip, i) => (
-            <div className="cdt-ri-tip-card" key={i}>
-              <span className="cdt-ri-tip-icon">{tip.icon}</span>
-              <div>
-                <h4>{tip.title}</h4>
-                <p>{tip.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1695,6 +1749,7 @@ export default CandidateDashboard;
 function LiveContestTab({user})
 {
   const navigate=useNavigate();
+  const {features}=useFeatures();
   const API_URL=import.meta.env.VITE_API_URL||'http://localhost:5000';
   const [contests, setContests]=useState([]);
   const [loading, setLoading]=useState(true);
@@ -1740,66 +1795,70 @@ function LiveContestTab({user})
       </div>
 
       {/* Join by code */}
-      <div className="cdt-section lq-join-section">
-        <div className="lq-join-row">
-          <input
-            type="text"
-            placeholder="Enter contest code (e.g. ABC123)"
-            value={joinCode}
-            onChange={e => setJoinCode(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key==='Enter'&&handleJoinByCode()}
-            className="lq-code-input"
-            maxLength={6}
-          />
-          <button onClick={handleJoinByCode} className="lq-join-btn" disabled={!joinCode.trim()}>
-            Join by Code
-          </button>
+      {features['student.contest.join_by_code'] !== false && (
+        <div className="cdt-section lq-join-section">
+          <div className="lq-join-row">
+            <input
+              type="text"
+              placeholder="Enter contest code (e.g. ABC123)"
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={e => e.key==='Enter'&&handleJoinByCode()}
+              className="lq-code-input"
+              maxLength={6}
+            />
+            <button onClick={handleJoinByCode} className="lq-join-btn" disabled={!joinCode.trim()}>
+              Join by Code
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Available contests */}
-      <div className="cdt-section">
-        <div className="lq-section-header">
-          <h2>Available Contests</h2>
-          <button onClick={fetchContests} className="lq-refresh-btn">
-            {loading? 'Loading...':'🔄 Refresh'}
-          </button>
-        </div>
+      {features['student.contest.browse'] !== false && (
+        <div className="cdt-section">
+          <div className="lq-section-header">
+            <h2>Available Contests</h2>
+            <button onClick={fetchContests} className="lq-refresh-btn">
+              {loading? 'Loading...':'🔄 Refresh'}
+            </button>
+          </div>
 
-        {loading? (
-          <div className="lq-loading">Loading contests...</div>
-        ):contests.length===0? (
-          <div className="lq-empty">
-            <Terminal size={48} className="lq-empty-icon" />
-            <h3>No live coding contests right now</h3>
-            <p>Coding contests will appear here automatically when a host starts one.<br />You can also join directly with a contest code.</p>
-          </div>
-        ):(
-          <div className="lq-grid">
-            {contests.map(c => (
-              <div key={c.id} className="lq-card">
-                <div className="lq-card-top">
-                  <span className="lq-code-badge">#{c.code}</span>
-                  <span className={`lq-status-badge ${c.status}`}>
-                    {statusLabel[c.status]||c.status}
-                  </span>
+          {loading? (
+            <div className="lq-loading">Loading contests...</div>
+          ):contests.length===0? (
+            <div className="lq-empty">
+              <Terminal size={48} className="lq-empty-icon" />
+              <h3>No live coding contests right now</h3>
+              <p>Coding contests will appear here automatically when a host starts one.<br />You can also join directly with a contest code.</p>
+            </div>
+          ):(
+            <div className="lq-grid">
+              {contests.map(c => (
+                <div key={c.id} className="lq-card">
+                  <div className="lq-card-top">
+                    <span className="lq-code-badge">#{c.code}</span>
+                    <span className={`lq-status-badge ${c.status}`}>
+                      {statusLabel[c.status]||c.status}
+                    </span>
+                  </div>
+                  <h3 className="lq-card-title">{c.title}</h3>
+                  <p className="lq-card-topic">{c.topic}</p>
+                  <div className="lq-card-meta">
+                    <span>● {c.difficulty}</span>
+                    <span>💻 {c.challengeCount} challenges</span>
+                    <span>👥 {c.participantCount} joined</span>
+                    <span>⏱ {c.duration} min</span>
+                  </div>
+                  <button onClick={() => handleJoinContest(c.code)} className="lq-play-btn">
+                    {c.status==='active'? '🔴 Join Live Contest':'💻 Join Contest'}
+                  </button>
                 </div>
-                <h3 className="lq-card-title">{c.title}</h3>
-                <p className="lq-card-topic">{c.topic}</p>
-                <div className="lq-card-meta">
-                  <span>● {c.difficulty}</span>
-                  <span>💻 {c.challengeCount} challenges</span>
-                  <span>👥 {c.participantCount} joined</span>
-                  <span>⏱ {c.duration} min</span>
-                </div>
-                <button onClick={() => handleJoinContest(c.code)} className="lq-play-btn">
-                  {c.status==='active'? '🔴 Join Live Contest':'💻 Join Contest'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1807,6 +1866,7 @@ function LiveContestTab({user})
 function LiveQuizTab({user})
 {
   const navigate=useNavigate();
+  const {features}=useFeatures();
   const API_URL=import.meta.env.VITE_API_URL||'http://localhost:5000';
   const [quizzes, setQuizzes]=useState([]);
   const [loading, setLoading]=useState(true);
@@ -1853,66 +1913,70 @@ function LiveQuizTab({user})
       </div>
 
       {/* Join by code */}
-      <div className="cdt-section lq-join-section">
-        <div className="lq-join-row">
-          <input
-            type="text"
-            placeholder="Enter room code (e.g. ABC123)"
-            value={joinCode}
-            onChange={e => setJoinCode(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key==='Enter'&&handleJoinByCode()}
-            className="lq-code-input"
-            maxLength={6}
-          />
-          <button onClick={handleJoinByCode} className="lq-join-btn" disabled={!joinCode.trim()}>
-            Join by Code
-          </button>
+      {features['student.quiz.join_by_code'] !== false && (
+        <div className="cdt-section lq-join-section">
+          <div className="lq-join-row">
+            <input
+              type="text"
+              placeholder="Enter room code (e.g. ABC123)"
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={e => e.key==='Enter'&&handleJoinByCode()}
+              className="lq-code-input"
+              maxLength={6}
+            />
+            <button onClick={handleJoinByCode} className="lq-join-btn" disabled={!joinCode.trim()}>
+              Join by Code
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Available quizzes */}
-      <div className="cdt-section">
-        <div className="lq-section-header">
-          <h2>Available Quizzes</h2>
-          <button onClick={fetchQuizzes} className="lq-refresh-btn">
-            {loading? 'Loading...':'🔄 Refresh'}
-          </button>
-        </div>
+      {features['student.quiz.browse'] !== false && (
+        <div className="cdt-section">
+          <div className="lq-section-header">
+            <h2>Available Quizzes</h2>
+            <button onClick={fetchQuizzes} className="lq-refresh-btn">
+              {loading? 'Loading...':'🔄 Refresh'}
+            </button>
+          </div>
 
-        {loading? (
-          <div className="lq-loading">Loading quizzes...</div>
-        ):quizzes.length===0? (
-          <div className="lq-empty">
-            <Trophy size={48} className="lq-empty-icon" />
-            <h3>No live quizzes right now</h3>
-            <p>Quizzes will appear here automatically when a recruiter starts one.<br />You can also join directly with a room code.</p>
-          </div>
-        ):(
-          <div className="lq-grid">
-            {quizzes.map(q => (
-              <div key={q.id} className="lq-card">
-                <div className="lq-card-top">
-                  <span className="lq-code-badge">#{q.code}</span>
-                  <span className={`lq-status-badge ${q.status}`}>
-                    {statusLabel[q.status]||q.status}
-                  </span>
+          {loading? (
+            <div className="lq-loading">Loading quizzes...</div>
+          ):quizzes.length===0? (
+            <div className="lq-empty">
+              <Trophy size={48} className="lq-empty-icon" />
+              <h3>No live quizzes right now</h3>
+              <p>Quizzes will appear here automatically when a recruiter starts one.<br />You can also join directly with a room code.</p>
+            </div>
+          ):(
+            <div className="lq-grid">
+              {quizzes.map(q => (
+                <div key={q.id} className="lq-card">
+                  <div className="lq-card-top">
+                    <span className="lq-code-badge">#{q.code}</span>
+                    <span className={`lq-status-badge ${q.status}`}>
+                      {statusLabel[q.status]||q.status}
+                    </span>
+                  </div>
+                  <h3 className="lq-card-title">{q.title}</h3>
+                  <p className="lq-card-topic">{q.topic}</p>
+                  <div className="lq-card-meta">
+                    <span>● {q.difficulty}</span>
+                    <span>📝 {q.questionCount} Q</span>
+                    <span>👥 {q.participantCount} joined</span>
+                    <span>🎙 {q.hostName}</span>
+                  </div>
+                  <button onClick={() => handleJoinQuiz(q.code)} className="lq-play-btn">
+                    {['active', 'question_open', 'question_closed'].includes(q.status)? '🔴 Join Live Quiz':'🎮 Join Quiz'}
+                  </button>
                 </div>
-                <h3 className="lq-card-title">{q.title}</h3>
-                <p className="lq-card-topic">{q.topic}</p>
-                <div className="lq-card-meta">
-                  <span>● {q.difficulty}</span>
-                  <span>📝 {q.questionCount} Q</span>
-                  <span>👥 {q.participantCount} joined</span>
-                  <span>🎙 {q.hostName}</span>
-                </div>
-                <button onClick={() => handleJoinQuiz(q.code)} className="lq-play-btn">
-                  {['active', 'question_open', 'question_closed'].includes(q.status)? '🔴 Join Live Quiz':'🎮 Join Quiz'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

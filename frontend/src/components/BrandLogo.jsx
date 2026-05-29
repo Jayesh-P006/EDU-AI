@@ -1,7 +1,7 @@
 import {Target} from 'lucide-react';
 import './BrandLogo.css';
 
-function BrandLogo({text='RecruitAI', iconSize=18})
+function BrandLogo({text='EDU-AI', iconSize=18})
 {
   return (
     <span className="brand-logo">

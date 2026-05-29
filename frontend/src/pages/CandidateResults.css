@@ -21,8 +21,7 @@
 }
 .cres-logo {
   font-size: 22px; font-weight: 800;
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  color: #ffffff;
   text-decoration: none;
 }
 .cres-nav-tabs { display: flex; gap: 4px; }

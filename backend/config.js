@@ -1,12 +1,21 @@
 import dotenv from 'dotenv';
 import {fileURLToPath} from 'url';
 import path from 'path';
+import dns from 'dns';
+
+// Fix local DNS resolution issues (e.g., MongoDB Atlas SRV records) by setting reliable fallback DNS servers
+try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (err) {
+    console.warn('⚠️ Failed to configure fallback DNS servers:', err.message);
+}
 
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
 // Load environment variables FIRST before anything else
 dotenv.config({path: path.join(__dirname, '.env')});
+
 
 // Validate critical environment variables
 const REQUIRED_ENV_VARS=[

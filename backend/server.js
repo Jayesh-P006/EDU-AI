@@ -33,6 +33,7 @@ import quizRoutes from './routes/quiz.js';
 import contestRoutes from './routes/contest.js';
 import adminRoutes from './routes/admin.js';
 import announcementRoutes from './routes/announcements.js';
+import featureConfigRoutes from './routes/featureConfig.js';
 import {setupSocketHandlers} from './socket/handlers.js';
 import {setupContestSocketHandlers} from './socket/contestHandlers.js';
 import {timeoutMiddleware, aiTimeoutMiddleware} from './middleware/timeout.js';
@@ -200,6 +201,7 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/contest', contestRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/feature-config', featureConfigRoutes);
 
 // Setup API versioning (enhanced version routes for future backwards compatibility)
 try

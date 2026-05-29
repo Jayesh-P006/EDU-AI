@@ -458,7 +458,7 @@ export function setupSocketHandlers(io)
                 // Generate AI response
                 const aiResponse=await geminiAI.generateResponse(
                     conversationHistory,
-                    "You are Spec AI, a helpful and knowledgeable AI assistant built into the RecruitAI recruitment platform. Be conversational, friendly, and provide clear, accurate information."
+                    "You are Spec AI, a helpful and knowledgeable AI assistant built into the EDU-AI platform. Be conversational, friendly, and provide clear, accurate information."
                 );
 
                 // Add AI message

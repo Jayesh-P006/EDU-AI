@@ -53,7 +53,7 @@ function Navbar()
     <nav className="navbar">
       <div className="navbar-container">
         <Link to={user? getDashboardPath():'/'} className="navbar-logo">
-          RecruitAI
+          EDU-AI
         </Link>
         <ul className="navbar-menu">
           {user? (

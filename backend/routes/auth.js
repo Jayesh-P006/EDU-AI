@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
+import Job from '../models/Job.js';
+import Application from '../models/Application.js';
 import {registerFace, verifyFace, checkFaceExists} from '../services/faceService.js';
 import {APIResponse} from '../middleware/response.js';
 import sendEmail, {isEmailConfigured} from '../services/sendEmail.js';
@@ -21,11 +23,12 @@ function generateToken(userId)
 
 function setTokenCookie(res, token)
 {
+  const isProduction = process.env.NODE_ENV==='production';
   // Set HTTP-only cookie (cannot be accessed by JavaScript)
   res.cookie('authToken', token, {
     httpOnly: true,         // Prevent JS access (XSS protection)
-    secure: process.env.NODE_ENV==='production',  // Only send over HTTPS in production
-    sameSite: 'None',     // CSRF protection
+    secure: isProduction,  // Only send over HTTPS in production
+    sameSite: isProduction ? 'None' : 'Lax',     // CSRF protection
     path: '/',
     maxAge: 7*24*60*60*1000, // 7 days
   });
@@ -95,10 +98,10 @@ router.post('/send-otp', async (req, res) =>
     );
 
     // Try to send email
-    const subject=purpose==='register'? 'Your Registration OTP – RecruitAI':'Password Reset OTP – RecruitAI';
+    const subject=purpose==='register'? 'Your Registration OTP – EDU-AI':'Password Reset OTP – EDU-AI';
     const html=`
       <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 30px; background: #0a0a0a; color: #fff; border-radius: 12px;">
-        <h2 style="text-align: center; color: #fff;">🛡️ RecruitAI</h2>
+        <h2 style="text-align: center; color: #fff;">🛡️ EDU-AI</h2>
         <p style="text-align: center; color: #a3a3a3;">Your verification code</p>
         <div style="text-align: center; font-size: 36px; font-weight: 700; letter-spacing: 6px; padding: 20px; background: #1a1a1a; border-radius: 8px; margin: 20px 0;">${otp}</div>
         <p style="text-align: center; color: #737373; font-size: 12px;">This code expires in 10 minutes</p>
@@ -107,7 +110,7 @@ router.post('/send-otp', async (req, res) =>
 
     try
     {
-      await sendEmail(email, subject, `Your RecruitAI OTP is: ${otp}`, html);
+      await sendEmail(email, subject, `Your EDU-AI OTP is: ${otp}`, html);
     } catch (mailErr)
     {
       console.error(`[AUTH] Mail send failed: ${mailErr.message} for ${email}`);
@@ -452,10 +455,11 @@ router.post('/logout', (req, res) =>
   try
   {
     // Clear HTTP-only cookie
+    const isProduction = process.env.NODE_ENV==='production';
     res.clearCookie('authToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV==='production',
-      sameSite: 'None',
+      secure: isProduction,
+      sameSite: isProduction ? 'None' : 'Lax',
       path: '/',
     });
 
@@ -502,7 +506,7 @@ router.post('/forgot-password', async (req, res) =>
         await transporter.sendMail({
           from: process.env.MAIL_USERNAME,
           to: email,
-          subject: 'Password Reset OTP – RecruitAI',
+          subject: 'Password Reset OTP – EDU-AI',
           html: `
             <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 30px; background: #0a0a0a; color: #fff; border-radius: 12px;">
               <h2 style="text-align: center;">🔑 Password Reset</h2>
@@ -649,7 +653,7 @@ const DEMO_ACCOUNTS=[
     email: 'admin@hirespec.demo',
     password: 'demo123',
     role: 'admin',
-    companyName: 'RecruitAI',
+    companyName: 'EDU-AI',
     bio: 'Platform administrator with full access to all admin features.',
     skills: [],
     profileComplete: 100,
@@ -691,6 +695,364 @@ router.post('/seed-demo', async (req, res) =>
   } catch (err)
   {
     console.error('[AUTH] seed-demo error:', err);
+    return APIResponse.error(res, err.message, 500);
+  }
+});
+
+// ── Seed All Data ───────────────────────────────────────────────────
+router.post('/seed-all', async (req, res) =>
+{
+  try
+  {
+    const results={
+      users: [],
+      jobs: [],
+      applications: [],
+    };
+
+    // ── 0. Ensure Demo Accounts Exist ──
+    const demoCompanySpec = DEMO_ACCOUNTS.find(a => a.username === 'demo_company');
+    const demoRecruiterSpec = DEMO_ACCOUNTS.find(a => a.username === 'demo_recruiter');
+    
+    // Seed them if not already created
+    for (const acct of DEMO_ACCOUNTS) {
+      let user = await User.findOne({ username: acct.username });
+      if (!user) {
+        user = await User.create({
+          ...acct,
+          password: hashPassword(acct.password),
+          faceRegistered: false,
+        });
+        results.users.push({ username: acct.username, status: 'created (demo)' });
+      }
+    }
+
+    const demoCompanyUser = await User.findOne({ username: 'demo_company' });
+    const demoRecruiterUser = await User.findOne({ username: 'demo_recruiter' });
+
+    // ── 1. Seed Company Admins/Recruiters ──
+    const companySpecs=[
+      {
+        username: 'google_hr',
+        email: 'hr@google.demo',
+        role: 'company_admin',
+        companyName: 'Google India',
+        fullName: 'Rajesh Nair',
+        bio: 'HR Lead for Google India Dev Centres.',
+      },
+      {
+        username: 'microsoft_recruiter',
+        email: 'recruiter@microsoft.demo',
+        role: 'recruiter',
+        companyName: 'Microsoft',
+        fullName: 'Sarah Jenkins',
+        bio: 'Senior Technical Talent Acquisition Specialist.',
+      },
+      {
+        username: 'meta_admin',
+        email: 'admin@meta.demo',
+        role: 'company_admin',
+        companyName: 'Meta',
+        fullName: 'David Chen',
+        bio: 'Director of Recruiting at Meta APAC.',
+      },
+      {
+        username: 'stripe_recruiter',
+        email: 'recruiter@stripe.demo',
+        role: 'recruiter',
+        companyName: 'Stripe',
+        fullName: 'Elena Rostova',
+        bio: 'Technical recruiter specializing in APAC engineering hires.',
+      }
+    ];
+
+    const companies=[];
+    for (const spec of companySpecs)
+    {
+      let user=await User.findOne({username: spec.username});
+      if (!user)
+      {
+        user=await User.create({
+          ...spec,
+          password: hashPassword('demo123'),
+          profileComplete: 85,
+        });
+        results.users.push({username: spec.username, status: 'created'});
+      } else
+      {
+        results.users.push({username: spec.username, status: 'already exists'});
+      }
+      companies.push(user);
+    }
+
+    // ── 2. Seed Candidates ──
+    const candidateSpecs=[
+      {
+        username: 'aditya_k',
+        email: 'aditya@eduai.demo',
+        fullName: 'Aditya Kumar',
+        skills: ['Java', 'Spring Boot', 'MySQL', 'System Design', 'Docker'],
+        bio: 'B.Tech CS Student at IIT Gandhinagar. Backend engineer focusing on Java web applications and system scalability.',
+        desiredRole: 'Software Engineer (Backend)',
+        location: 'Gandhinagar, India',
+        headline: 'Aspiring Backend Developer | Java & Spring enthusiast',
+        desiredSalary: '18,000,000 INR',
+        atsScore: 92,
+        profileComplete: 90,
+      },
+      {
+        username: 'ananya_i',
+        email: 'ananya@eduai.demo',
+        fullName: 'Ananya Iyer',
+        skills: ['Python', 'Machine Learning', 'TensorFlow', 'Pandas', 'SQL'],
+        bio: 'Final year Data Science student. Passionate about applying machine learning to real-world business challenges.',
+        desiredRole: 'Data Scientist / ML Engineer',
+        location: 'Mumbai, India',
+        headline: 'Data Scientist | Machine Learning Specialist',
+        desiredSalary: '16,000,000 INR',
+        atsScore: 87,
+        profileComplete: 85,
+      },
+      {
+        username: 'kabir_m',
+        email: 'kabir@eduai.demo',
+        fullName: 'Kabir Mehta',
+        skills: ['JavaScript', 'React', 'Node.js', 'Express', 'CSS', 'HTML'],
+        bio: 'Front-end enthusiast with a love for clean UI/UX design and modern web development.',
+        desiredRole: 'Frontend Developer',
+        location: 'Delhi, India',
+        headline: 'React Frontend Developer | UI Enthusiast',
+        desiredSalary: '12,000,000 INR',
+        atsScore: 81,
+        profileComplete: 95,
+      },
+      {
+        username: 'riya_s',
+        email: 'riya@eduai.demo',
+        fullName: 'Riya Sen',
+        skills: ['Go', 'Kubernetes', 'Docker', 'AWS', 'Linux', 'Terraform'],
+        bio: 'DevOps researcher interested in cloud-native infrastructure automation and continuous integration pipelines.',
+        desiredRole: 'DevOps / Site Reliability Engineer',
+        location: 'Bangalore, India',
+        headline: 'Go Developer & DevOps Engineer',
+        desiredSalary: '20,000,000 INR',
+        atsScore: 95,
+        profileComplete: 88,
+      },
+      {
+        username: 'vikram_m',
+        email: 'vikram@eduai.demo',
+        fullName: 'Vikram Malhotra',
+        skills: ['PHP', 'Laravel', 'HTML', 'CSS', 'JavaScript', 'SQL'],
+        bio: 'Self-taught full-stack developer with experience building web applications for small businesses.',
+        desiredRole: 'Full Stack Engineer',
+        location: 'Pune, India',
+        headline: 'Full-stack Web Developer | PHP & React Specialist',
+        desiredSalary: '10,000,000 INR',
+        atsScore: 75,
+        profileComplete: 75,
+      },
+      {
+        username: 'neha_p',
+        email: 'neha@eduai.demo',
+        fullName: 'Neha Patel',
+        skills: ['C++', 'Algorithms', 'Data Structures', 'Python', 'Git'],
+        bio: 'Competitive programmer who loves solving algorithmic puzzles and writing efficient C++ code.',
+        desiredRole: 'Software Engineer',
+        location: 'Ahmedabad, India',
+        headline: 'C++ Competitive Programmer | Coding Enthusiast',
+        desiredSalary: '15,000,000 INR',
+        atsScore: 88,
+        profileComplete: 80,
+      },
+      {
+        username: 'sid_g',
+        email: 'sid@eduai.demo',
+        fullName: 'Siddharth Gupta',
+        skills: ['TypeScript', 'Next.js', 'PostgreSQL', 'GraphQL', 'Tailwind'],
+        bio: 'Fullstack web engineer building responsive web apps using TypeScript, Next.js, and Postgres.',
+        desiredRole: 'Fullstack Developer',
+        location: 'Gandhinagar, India',
+        headline: 'TypeScript & Next.js Fullstack Developer',
+        desiredSalary: '14,000,000 INR',
+        atsScore: 84,
+        profileComplete: 90,
+      }
+    ];
+
+    const candidates=[];
+    for (const spec of candidateSpecs)
+    {
+      let user=await User.findOne({username: spec.username});
+      if (!user)
+      {
+        user=await User.create({
+          ...spec,
+          password: hashPassword('demo123'),
+          role: 'candidate',
+          faceRegistered: false,
+          education: [{
+            degree: 'B.Tech',
+            field: 'Computer Science',
+            institution: 'IIT Gandhinagar',
+            year: '2026',
+            startYear: '2022',
+            endYear: '2026',
+            grade: '9.0/10 CGPA'
+          }]
+        });
+        results.users.push({username: spec.username, status: 'created'});
+      } else
+      {
+        results.users.push({username: spec.username, status: 'already exists'});
+      }
+      candidates.push(user);
+    }
+
+    // ── 3. Seed Jobs (Including TechCorp Solutions) ──
+    const jobSpecs=[
+      {
+        title: 'Backend Software Engineer (Go)',
+        department: 'Engineering',
+        location: 'Remote',
+        type: 'Full-Time',
+        description: 'Build high-performance microservices and cloud infrastructure in Go.',
+        requirements: 'Experience with Go programming, REST/gRPC APIs, Docker, and SQL databases.',
+        skills: ['Go', 'Docker', 'Kubernetes', 'SQL', 'AWS'],
+        companyName: 'Google India',
+        salary: {min: 1500000, max: 2500000, currency: 'INR'},
+        postedBy: companies[0] ? companies[0]._id : demoCompanyUser._id,
+      },
+      {
+        title: 'Senior Full-Stack Engineer',
+        department: 'Engineering',
+        location: 'Remote',
+        type: 'Full-Time',
+        description: 'Lead the development of our core web platform using React and Node.js.',
+        requirements: '5+ years experience with React, Node.js, and MongoDB.',
+        skills: ['React', 'Node.js', 'MongoDB', 'JavaScript', 'System Design'],
+        companyName: 'TechCorp Solutions',
+        salary: {min: 1800000, max: 2800000, currency: 'INR'},
+        postedBy: demoCompanyUser._id,
+      },
+      {
+        title: 'QA Automation Engineer',
+        department: 'QA',
+        location: 'Hybrid',
+        type: 'Full-Time',
+        description: 'Build automated test suites for our web applications and APIs.',
+        requirements: 'Experience with Selenium, Cypress, and JavaScript/Python scripting.',
+        skills: ['JavaScript', 'Python', 'Git', 'Algorithms'],
+        companyName: 'TechCorp Solutions',
+        salary: {min: 800000, max: 1400000, currency: 'INR'},
+        postedBy: demoRecruiterUser ? demoRecruiterUser._id : demoCompanyUser._id,
+      },
+      {
+        title: 'Cloud Solutions Architect',
+        department: 'Infrastructure',
+        location: 'Remote',
+        type: 'Full-Time',
+        description: 'Design and manage our cloud infrastructure on AWS and Kubernetes.',
+        requirements: 'Experience with Kubernetes, AWS, Terraform, and Docker.',
+        skills: ['Kubernetes', 'Docker', 'AWS', 'Go', 'Linux'],
+        companyName: 'TechCorp Solutions',
+        salary: {min: 2400000, max: 3600000, currency: 'INR'},
+        postedBy: demoCompanyUser._id,
+      },
+      {
+        title: 'DevOps Engineering Intern',
+        department: 'Infrastructure',
+        location: 'Remote',
+        type: 'Internship',
+        description: 'Assist in containerizing backend web systems and configuring CI/CD pipelines.',
+        requirements: 'Familiarity with Git, Linux terminal, Docker foundations, and hosting applications on AWS.',
+        skills: ['Linux', 'Docker', 'Git', 'AWS', 'JavaScript'],
+        companyName: 'Google India',
+        salary: {min: 40000, max: 60000, currency: 'INR'},
+        postedBy: companies[0] ? companies[0]._id : demoCompanyUser._id,
+      }
+    ];
+
+    const jobs=[];
+    for (const spec of jobSpecs)
+    {
+      let job=await Job.findOne({title: spec.title, companyName: spec.companyName});
+      if (!job)
+      {
+        job=await Job.create({
+          title: spec.title,
+          department: spec.department,
+          location: spec.location,
+          type: spec.type,
+          description: spec.description,
+          requirements: spec.requirements,
+          skills: spec.skills,
+          salary: spec.salary,
+          companyName: spec.companyName,
+          postedBy: spec.postedBy,
+          status: 'active',
+          applicantCount: 0,
+        });
+        results.jobs.push({title: spec.title, status: 'created'});
+      } else
+      {
+        results.jobs.push({title: spec.title, status: 'already exists'});
+      }
+      jobs.push(job);
+    }
+
+    // ── 4. Seed Applications (Associated with TechCorp Solutions jobs) ──
+    const appSpecs=[
+      {candIndex: 0, jobIndex: 1, status: 'interview', round: 'Technical Round 2', score: 85}, // Aditya -> TechCorp Fullstack (Interview)
+      {candIndex: 0, jobIndex: 4, status: 'applied', round: 'Applied', score: 0}, // Aditya -> Google DevOps
+      {candIndex: 1, jobIndex: 2, status: 'hired', round: 'Hired', score: 92}, // Ananya -> TechCorp QA (Hired)
+      {candIndex: 2, jobIndex: 1, status: 'offered', round: 'Offer Extended', score: 88}, // Kabir -> TechCorp Fullstack (Offered)
+      {candIndex: 3, jobIndex: 0, status: 'selected', round: 'HR Round Completed', score: 94}, // Riya -> Google Go (Selected)
+      {candIndex: 3, jobIndex: 3, status: 'shortlisted', round: 'Online Test Passed', score: 90}, // Riya -> TechCorp Cloud Architect (Shortlisted)
+      {candIndex: 4, jobIndex: 1, status: 'rejected', round: 'Resume Screening', score: 45}, // Vikram -> TechCorp Fullstack (Rejected)
+      {candIndex: 5, jobIndex: 0, status: 'screening', round: 'Resume Review', score: 68}, // Neha -> Google Go (Screening)
+      {candIndex: 5, jobIndex: 2, status: 'applied', round: 'Applied', score: 0}, // Neha -> TechCorp QA (Applied)
+      {candIndex: 6, jobIndex: 1, status: 'interview', round: 'System Design', score: 82}, // Sid -> TechCorp Fullstack (Interview)
+      {candIndex: 6, jobIndex: 3, status: 'hired', round: 'Hired', score: 95}, // Sid -> TechCorp Cloud Architect (Hired)
+      {candIndex: 2, jobIndex: 0, status: 'not_eligible', round: 'Mismatch', score: 30} // Ananya -> Google Go
+    ];
+
+    for (const spec of appSpecs)
+    {
+      const candidate=candidates[spec.candIndex];
+      const job=jobs[spec.jobIndex];
+
+      const existing=await Application.findOne({job: job._id, candidate: candidate._id});
+      if (!existing)
+      {
+        await Application.create({
+          job: job._id,
+          candidate: candidate._id,
+          status: spec.status,
+          round: spec.round,
+          score: spec.score,
+          atsScore: candidate.atsScore||75,
+          skillMatchScore: Math.floor(60+Math.random()*40),
+          appliedAt: new Date(Date.now()-(Math.random()*30+1)*24*60*60*1000),
+        });
+
+        await Job.findByIdAndUpdate(job._id, {$inc: {applicantCount: 1}});
+        results.applications.push({candidate: candidate.username, job: job.title, status: 'created'});
+      } else
+      {
+        // If it already exists, let's update it to make sure it matches the spec status (for re-runs)
+        existing.status = spec.status;
+        existing.round = spec.round;
+        existing.score = spec.score;
+        await existing.save();
+        results.applications.push({candidate: candidate.username, job: job.title, status: 'updated to status ' + spec.status});
+      }
+    }
+
+    return APIResponse.success(res, results, 'Database seeded successfully');
+  } catch (err)
+  {
+    console.error('[AUTH] seed-all error:', err);
     return APIResponse.error(res, err.message, 500);
   }
 });

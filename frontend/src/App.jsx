@@ -35,6 +35,7 @@ import ContestDashboard from './pages/ContestDashboard'
 import ContestHost from './pages/ContestHost'
 import ContestPlay from './pages/ContestPlay'
 import ContestResults from './pages/ContestResults'
+import {FeatureProvider} from './services/FeatureContext'
 import './App.css'
 
 // Pages that render their own navbar (dashboards)
@@ -68,24 +69,35 @@ function AppLayout()
                     <Route path="/ai-interview-report/:sessionId" element={<AIInterviewReport />} />
                     <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
                     <Route path="/coding-practice" element={<CodingPractice />} />
-                    <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
-                    <Route path="/company-dashboard" element={<CompanyDashboard />} />
-                    <Route path="/admin-scoring" element={<AdminScoring />} />
+                    <Route path="/candidate-dashboard" element={<FeatureProvider role="student"><CandidateDashboard /></FeatureProvider>} />
+                    <Route path="/company-dashboard" element={<FeatureProvider role="company"><CompanyDashboard /></FeatureProvider>} />
+                    <Route path="/admin-scoring" element={<FeatureProvider role="company"><AdminScoring /></FeatureProvider>} />
                     <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                    <Route path="/candidate-results" element={<CandidateResults />} />
-                    <Route path="/candidate-analytics" element={<CandidateAnalytics />} />
+                    <Route path="/candidate-results" element={<FeatureProvider role="student"><CandidateResults /></FeatureProvider>} />
+                    <Route path="/candidate-analytics" element={<FeatureProvider role="student"><CandidateAnalytics /></FeatureProvider>} />
                     <Route path="/candidate-profile" element={<CandidateProfile />} />
-                    <Route path="/resume-verification" element={<ResumeVerification />} />
-                    <Route path="/quiz/dashboard" element={<QuizDashboard />} />
-                    <Route path="/quiz/host/:quizId" element={<QuizHost />} />
-                    <Route path="/quiz/join" element={<QuizDashboard />} />
+                    <Route path="/resume-verification" element={<FeatureProvider role="student"><ResumeVerification /></FeatureProvider>} />
+                    <Route path="/quiz/dashboard" element={<FeatureProvider role="company"><QuizDashboard /></FeatureProvider>} />
+                    <Route path="/quiz/host/:quizId" element={<FeatureProvider role="company"><QuizHost /></FeatureProvider>} />
+                    <Route path="/quiz/join" element={<FeatureProvider role="company"><QuizDashboard /></FeatureProvider>} />
                     <Route path="/quiz/play" element={<QuizPlay />} />
-                    <Route path="/quiz/results/:quizId" element={<QuizResults />} />
-                    <Route path="/contest/dashboard" element={<ContestDashboard />} />
-                    <Route path="/contest/host/:contestId" element={<ContestHost />} />
-                    <Route path="/contest/join" element={<ContestDashboard />} />
+                    <Route path="/quiz/results/:quizId" element={<FeatureProvider role="company"><QuizResults /></FeatureProvider>} />
+                    <Route path="/contest/dashboard" element={<FeatureProvider role="company"><ContestDashboard /></FeatureProvider>} />
+                    <Route path="/contest/host/:contestId" element={<FeatureProvider role="company"><ContestHost /></FeatureProvider>} />
+                    <Route path="/contest/join" element={<FeatureProvider role="company"><ContestDashboard /></FeatureProvider>} />
                     <Route path="/contest/play" element={<ContestPlay />} />
-                    <Route path="/contest/results/:contestId" element={<ContestResults />} />
+                    <Route path="/contest/results/:contestId" element={<FeatureProvider role="company"><ContestResults /></FeatureProvider>} />
+                    <Route path="/axiom-chat" element={<FeatureProvider role="student"><AxiomChat /></FeatureProvider>} />
+                    <Route path="/ai-interview-setup" element={<FeatureProvider role="student"><AIInterviewSetup /></FeatureProvider>} />
+                    <Route path="/ai-interview/:sessionId" element={<FeatureProvider role="student"><AIInterviewRoom /></FeatureProvider>} />
+                    <Route path="/ai-interview-report/:sessionId" element={<FeatureProvider role="student"><AIInterviewReport /></FeatureProvider>} />
+                    <Route path="/coding-practice" element={<FeatureProvider role="student"><CodingPractice /></FeatureProvider>} />
+                    <Route path="/practice" element={<FeatureProvider role="student"><PracticeMode /></FeatureProvider>} />
+                    <Route path="/practice-setup" element={<FeatureProvider role="student"><PracticeSessionSetup /></FeatureProvider>} />
+                    <Route path="/practice-interview/:sessionId" element={<FeatureProvider role="student"><PracticeInterviewRoom /></FeatureProvider>} />
+                    <Route path="/practice-feedback/:sessionId" element={<FeatureProvider role="student"><PracticeFeedback /></FeatureProvider>} />
+                    <Route path="/proctor-dashboard" element={<FeatureProvider role="company"><ProctorDashboard /></FeatureProvider>} />
+                    <Route path="/recruiter-dashboard" element={<FeatureProvider role="company"><RecruiterDashboard /></FeatureProvider>} />
                 </Routes>
             </div>
         </div>

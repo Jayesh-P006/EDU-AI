@@ -49,7 +49,7 @@ const userSchema=new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['candidate', 'company_admin', 'company_hr', 'recruiter', 'proctor'],
+    enum: ['candidate', 'company_admin', 'company_hr', 'recruiter', 'proctor', 'admin'],
     default: 'candidate',
   },
   companyName: {

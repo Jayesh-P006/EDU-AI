@@ -8,11 +8,14 @@ import
     ChevronUp, Layers, Zap, AlertCircle, Info
   } from 'lucide-react';
 import api from '../services/api';
+import {useFeature} from '../services/FeatureContext';
 import './ResumeVerification.css';
 
 function ResumeVerification()
 {
   const navigate=useNavigate();
+  const isEnabled=useFeature('student.resume_verification');
+
   const [user, setUser]=useState(null);
   const [loading, setLoading]=useState(true);
   const [running, setRunning]=useState(false);
@@ -37,6 +40,14 @@ function ResumeVerification()
       navigate('/login');
     }
   }, []);
+
+  useEffect(() =>
+  {
+    if (!isEnabled)
+    {
+      navigate('/candidate-dashboard');
+    }
+  }, [isEnabled, navigate]);
 
   const fetchResults=async (userId) =>
   {
