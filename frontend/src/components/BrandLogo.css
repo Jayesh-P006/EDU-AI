@@ -1,0 +1,16 @@
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.brand-logo-icon {
+  opacity: 0.95;
+}
+
+.brand-logo-text {
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}

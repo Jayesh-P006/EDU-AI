@@ -1,0 +1,145 @@
+.qj-root {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center top, #1e1642 0%, #0f1117 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #e2e8f0;
+  padding: 20px;
+}
+.qj-card {
+  background: #161b27;
+  border: 1px solid #1e2740;
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.qj-logo {
+  font-size: 3rem;
+}
+.qj-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+.qj-error {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+.qj-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.qj-code-input,
+.qj-name-input {
+  background: #0f1117;
+  border: 2px solid #1e2740;
+  border-radius: 12px;
+  color: #f1f5f9;
+  padding: 16px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.2em;
+  outline: none;
+  font-family: monospace;
+  transition: border-color 0.2s;
+}
+.qj-name-input {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: inherit;
+}
+.qj-code-input:focus,
+.qj-name-input:focus {
+  border-color: #6366f1;
+}
+.qj-btn {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.qj-btn:hover:not(:disabled) {
+  background: #4f46e5;
+}
+.qj-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.qj-btn-secondary {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #1e2740;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.qj-btn-secondary:hover {
+  color: #94a3b8;
+  border-color: #2d3d5c;
+}
+.qj-found {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.qj-quiz-info {
+  background: #0f1117;
+  border: 1px solid #1e2740;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+}
+.qj-quiz-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.qj-quiz-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+.qj-diff {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.qj-diff-easy {
+  background: #052e16;
+  color: #86efac;
+}
+.qj-diff-medium {
+  background: #451a03;
+  color: #fde68a;
+}
+.qj-diff-hard {
+  background: #450a0a;
+  color: #fca5a5;
+}
+.qj-hint {
+  font-size: 0.8rem;
+  color: #334155;
+}

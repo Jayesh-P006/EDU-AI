@@ -1,0 +1,139 @@
+/* HireSpec App Styles */
+.App {
+  min-height: 100vh;
+  background: #210307;
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(33, 3, 7, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(232, 216, 196, 0.12);
+  padding: 0;
+}
+
+/* Push page content below the fixed navbar */
+.page-content {
+  padding-top: 72px;
+}
+
+.navbar-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.logo svg {
+  width: 28px;
+  height: 28px;
+}
+
+.logo:hover {
+  opacity: 0.9;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.nav-link:hover {
+  color: #F5ECD7;
+  background: rgba(232, 216, 196, 0.08);
+}
+
+.nav-link.active {
+  color: #F5ECD7;
+  background: rgba(232, 216, 196, 0.14);
+}
+
+.nav-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-link.proctor-link {
+  background: transparent;
+  border: 1px solid rgba(232, 216, 196, 0.3);
+  color: #F5ECD7;
+}
+
+.nav-link.proctor-link:hover {
+  background: #E8D8C4;
+  color: #210307;
+  border-color: #E8D8C4;
+}
+
+/* Mobile Navigation */
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .nav-links {
+    display: none;
+  }
+
+  .nav-links.open {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: #2e0509;
+    border-bottom: 1px solid rgba(232, 216, 196, 0.12);
+    padding: 16px;
+    gap: 4px;
+  }
+
+  .nav-links.open .nav-link {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,793 @@
+.ch-root {
+  min-height: 100vh;
+  background: #0f1117;
+  color: #e2e8f0;
+  font-family: "Inter", system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.ch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: #161b27;
+  border-bottom: 1px solid #1e2740;
+  flex-shrink: 0;
+}
+.ch-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ch-logo {
+  font-size: 1.6rem;
+}
+.ch-contest-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.ch-contest-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.ch-code {
+  color: #10b981;
+  font-family: monospace;
+}
+.ch-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ch-challenges-count {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  background: #1e2740;
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+.ch-phase-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ch-phase-waiting {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+.ch-phase-active {
+  background: #14532d;
+  color: #86efac;
+}
+.ch-phase-ended {
+  background: #1f2937;
+  color: #9ca3af;
+}
+
+/* Error */
+.ch-error {
+  background: #7f1d1d;
+  color: #fca5a5;
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+.ch-error button {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Body */
+.ch-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* Spinner */
+.ch-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 16px;
+  color: #64748b;
+  font-size: 1rem;
+}
+.ch-spin {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #1e2740;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: chSpin 0.8s linear infinite;
+}
+@keyframes chSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ch-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Waiting room */
+.ch-waiting {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 40px;
+  padding: 40px;
+  align-items: flex-start;
+}
+.ch-waiting-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ch-waiting-info h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.ch-big-code {
+  font-size: 3.5rem;
+  font-weight: 900;
+  font-family: monospace;
+  color: #10b981;
+  background: #1e2740;
+  padding: 16px 32px;
+  border-radius: 16px;
+  letter-spacing: 0.3em;
+  display: inline-block;
+}
+.ch-participant-list {
+  width: 280px;
+  background: #161b27;
+  border: 1px solid #1e2740;
+  border-radius: 14px;
+  padding: 20px;
+}
+.ch-participant-list h3 {
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+  color: #94a3b8;
+}
+.ch-p-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1e2740;
+}
+.ch-p-row:last-child {
+  border: none;
+}
+.ch-p-num {
+  font-size: 0.75rem;
+  color: #475569;
+  width: 20px;
+}
+.ch-p-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Live dashboard */
+.ch-live-dashboard {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.ch-live-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #131825;
+  border-bottom: 1px solid #1e2740;
+}
+.ch-timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ch-timer-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.ch-timer-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: #10b981;
+}
+.ch-live-stats {
+  display: flex;
+  gap: 24px;
+}
+.ch-live-stat {
+  text-align: center;
+}
+.ch-live-stat-val {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+.ch-live-stat-lbl {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.ch-live-columns {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Progress panel */
+.ch-progress-panel {
+  padding: 20px;
+  overflow-y: auto;
+  background: #111621;
+  border-right: 1px solid #1e2740;
+}
+.ch-progress-panel h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 16px;
+}
+.ch-prog-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #1a2035;
+}
+.ch-prog-row:last-child {
+  border: none;
+}
+.ch-prog-row.done {
+  opacity: 0.7;
+}
+.ch-prog-rank {
+  width: 24px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.ch-prog-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ch-prog-solved {
+  font-size: 0.75rem;
+  color: #10b981;
+  background: #14532d;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.ch-prog-score {
+  font-size: 0.85rem;
+  color: #10b981;
+  font-weight: 700;
+  width: 60px;
+  text-align: right;
+}
+.ch-prog-bar-wrap {
+  width: 80px;
+  height: 6px;
+  background: #1e2740;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ch-prog-bar {
+  height: 100%;
+  background: #10b981;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Leaderboard panel */
+.ch-leaderboard-panel {
+  padding: 24px;
+  overflow-y: auto;
+}
+.ch-leaderboard-panel h3 {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+.ch-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ch-lb-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  color: #475569;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1e2740;
+}
+.ch-lb-table td {
+  padding: 12px;
+  border-bottom: 1px solid #1e2740;
+  font-size: 0.9rem;
+}
+.ch-lb-table tr:hover td {
+  background: rgba(16, 185, 129, 0.05);
+}
+.ch-lb-rank {
+  width: 50px;
+  font-weight: 700;
+  color: #64748b;
+}
+.ch-lb-name {
+  font-weight: 600;
+}
+.ch-lb-solved {
+  color: #10b981;
+}
+.ch-lb-score {
+  font-weight: 700;
+  color: #10b981;
+}
+.ch-lb-submissions {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Buttons */
+.ch-btn-start {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 32px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ch-btn-start:hover {
+  background: #15803d;
+}
+.ch-btn-end {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ch-btn-end:hover {
+  background: #7f1d1d;
+}
+.ch-btn-secondary {
+  background: #1e2740;
+  color: #94a3b8;
+  border: 1px solid #2d3d5c;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ch-btn-secondary:hover {
+  background: #253354;
+  color: #e2e8f0;
+}
+
+/* Ended state */
+.ch-ended {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+}
+.ch-ended-card {
+  max-width: 800px;
+  width: 100%;
+  background: #161b27;
+  border: 1px solid #1e2740;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+}
+.ch-ended-card h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.ch-ended-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* Podium */
+.ch-podium {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.ch-podium-place {
+  text-align: center;
+  background: #111621;
+  border: 2px solid #1e2740;
+  border-radius: 12px;
+  padding: 20px 28px;
+  min-width: 140px;
+}
+.ch-podium-place.p1 {
+  border-color: #fbbf24;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.1) 0%, #111621 100%);
+}
+.ch-podium-place.p2 {
+  border-color: #9ca3af;
+  background: linear-gradient(
+    180deg,
+    rgba(156, 163, 175, 0.1) 0%,
+    #111621 100%
+  );
+}
+.ch-podium-place.p3 {
+  border-color: #d97706;
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.1) 0%, #111621 100%);
+}
+.ch-podium-medal {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+.ch-podium-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.ch-podium-score {
+  font-size: 0.9rem;
+  color: #10b981;
+  font-weight: 600;
+}
+.ch-podium-solved {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Full leaderboard */
+.ch-full-lb {
+  margin-top: 24px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.ch-full-lb h4 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.ch-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #1e2740;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.ch-lb-row-rank {
+  width: 30px;
+  font-weight: 700;
+  color: #64748b;
+}
+.ch-lb-row-name {
+  flex: 1;
+  font-weight: 600;
+  text-align: left;
+}
+.ch-lb-row-solved {
+  font-size: 0.85rem;
+  color: #10b981;
+}
+.ch-lb-row-score {
+  font-weight: 700;
+  color: #10b981;
+  width: 60px;
+  text-align: right;
+}
+
+/* Actions */
+.ch-ended-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* ── Missing classes used in JSX ──────────────────────────── */
+
+/* Countdown timer in header */
+.ch-countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  background: #1e2740;
+  padding: 5px 14px;
+  border-radius: 8px;
+}
+
+/* Danger button (end contest) */
+.ch-btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.ch-btn-danger:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+/* Timer progress bar */
+.ch-timer-bar {
+  height: 4px;
+  background: #1e2740;
+  width: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ch-timer-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+
+/* Stats row */
+.ch-stats-row {
+  display: flex;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #131825;
+  border-bottom: 1px solid #1e2740;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ch-stat {
+  text-align: center;
+  padding: 10px 20px;
+  background: #161b27;
+  border: 1px solid #1e2740;
+  border-radius: 10px;
+  min-width: 100px;
+}
+.ch-stat-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #10b981;
+  display: block;
+}
+.ch-stat-lbl {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  display: block;
+}
+
+/* Leaderboard sidebar in active mode */
+.ch-sidebar-board {
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid #1e2740;
+  background: #111621;
+}
+.ch-sidebar-board h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Integrity badge in leaderboard */
+.ch-lb-integrity {
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+}
+
+/* P-rank in waiting list */
+.ch-p-rank {
+  font-size: 0.75rem;
+  color: #475569;
+  width: 24px;
+  font-weight: 600;
+}
+
+/* Hint text */
+.ch-hint {
+  font-style: italic;
+  color: #475569;
+  font-size: 0.8rem;
+}
+
+/* Progress count */
+.ch-prog-count {
+  font-size: 0.75rem;
+  color: #10b981;
+  background: #14532d;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Done check in progress */
+.ch-prog-done {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* Next/results button */
+.ch-btn-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ch-btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ch-live-columns {
+    grid-template-columns: 1fr;
+  }
+  .ch-sidebar-board {
+    max-height: 250px;
+    border-right: none;
+    border-bottom: 1px solid #1e2740;
+  }
+}
+
+@media (max-width: 768px) {
+  .ch-body {
+    grid-template-columns: 1fr;
+  }
+  .ch-header {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .ch-waiting {
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+  }
+  .ch-participant-list {
+    width: 100%;
+  }
+  .ch-live-columns {
+    grid-template-columns: 1fr;
+  }
+  .ch-progress-panel {
+    max-height: 200px;
+  }
+  .ch-big-code {
+    font-size: 2.2rem;
+    padding: 12px 20px;
+    letter-spacing: 0.2em;
+  }
+  .ch-stats-row {
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .ch-stat {
+    padding: 8px 14px;
+    min-width: 80px;
+  }
+  .ch-stat-val {
+    font-size: 1.1rem;
+  }
+  .ch-podium {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .ch-podium-place {
+    min-width: unset;
+    width: 100%;
+    max-width: 250px;
+  }
+  .ch-ended-card {
+    padding: 20px;
+  }
+  .ch-ended-card h2 {
+    font-size: 1.4rem;
+  }
+  .ch-ended-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ch-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .ch-contest-title {
+    font-size: 0.9rem;
+  }
+  .ch-big-code {
+    font-size: 1.8rem;
+    padding: 10px 16px;
+  }
+}

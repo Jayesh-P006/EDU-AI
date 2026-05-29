@@ -1,0 +1,250 @@
+.secondary-camera-setup {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.setup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setup-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.connected {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--accent-primary);
+}
+
+.status.disconnected {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.connection-methods {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.method {
+  flex: 1;
+  text-align: center;
+}
+
+.method h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.method-divider {
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0 8px;
+}
+
+.qr-container {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.qr-code {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.qr-instruction {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.method-instruction {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.connected-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.info-text p {
+  margin: 0;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.info-text small {
+  color: var(--accent-secondary);
+}
+
+.setup-instructions {
+  background: var(--bg-tertiary);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent-primary);
+}
+
+.setup-instructions h5 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.setup-instructions ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.setup-instructions li {
+  margin-bottom: 4px;
+}
+
+/* Phone view styles */
+.secondary-camera-phone {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.phone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.phone-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.connected-badge {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.phone-video {
+  width: 100%;
+  flex: 1;
+  border-radius: var(--radius-sm);
+  background: #000;
+  object-fit: cover;
+}
+
+.phone-instructions {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.phone-instructions p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.phone-instructions ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+.phone-instructions li {
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.phone-instructions .warning {
+  margin: 12px 0 0 0;
+  padding: 8px;
+  background: #ef4444;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.btn-secondary {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}

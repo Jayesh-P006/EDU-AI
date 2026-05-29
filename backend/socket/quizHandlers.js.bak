@@ -1,0 +1,497 @@
+/**
+ * Quiz Socket Handlers
+ * Manages real-time live quiz sessions over Socket.IO
+ *
+ * Events (client → server):
+ *   quiz:host-join          { quizId }
+ *   quiz:participant-join   { code, name, userId? }
+ *   quiz:start              { quizId }
+ *   quiz:next-question      { quizId }
+ *   quiz:submit-answer      { quizId, questionIndex, answer, timeMs }
+ *   quiz:end                { quizId }
+ *
+ * Events (server → client):
+ *   quiz:joined             { quiz, participants, role }
+ *   quiz:participant-update { participants }
+ *   quiz:started            { questionIndex, question, totalQuestions, timeLimit }
+ *   quiz:question           { questionIndex, question, totalQuestions, timeLimit }
+ *   quiz:question-closed    { correctAnswer, explanation, stats, leaderboard }
+ *   quiz:answer-result      { correct, pointsEarned, totalScore, rank }
+ *   quiz:ended              { leaderboard, stats }
+ *   quiz:error              { message }
+ */
+
+import Quiz from '../models/Quiz.js';
+import {buildLeaderboard} from '../routes/quiz.js';
+
+// In-memory map of active quiz sessions to avoid constant DB reads during play
+// quizId -> { quiz (live snapshot), questionTimers: Map }
+const activeSessions=new Map();
+
+// socket.id -> { quizId, role: 'host'|'participant', name, participantId }
+const socketMeta=new Map();
+
+export function setupQuizSocketHandlers(io)
+{
+    const quizNS=io; // use main namespace
+
+    // ── HOST JOINS ─────────────────────────────────────────────────────────────
+    quizNS.on('connection', (socket) =>
+    {
+        // ── Host joins their quiz room ────────────────────────────────────────
+        socket.on('quiz:host-join', async ({quizId}={}) =>
+        {
+            try
+            {
+                if (!quizId) return socket.emit('quiz:error', {message: 'quizId required'});
+
+                const quiz=await Quiz.findById(quizId);
+                if (!quiz) return socket.emit('quiz:error', {message: 'Quiz not found'});
+                if (['completed'].includes(quiz.status))
+                    return socket.emit('quiz:error', {message: 'Quiz has already ended'});
+
+                const room=`quiz:${quizId}`;
+                socket.join(room);
+                socketMeta.set(socket.id, {quizId, role: 'host', name: quiz.hostName, participantId: 'host'});
+
+                // Initialise in-memory session
+                if (!activeSessions.has(quizId))
+                {
+                    activeSessions.set(quizId, {quiz, questionTimers: new Map()});
+                }
+
+                socket.emit('quiz:joined', {
+                    role: 'host',
+                    quiz: sanitizeQuizForHost(quiz),
+                    participants: buildLeaderboard(quiz),
+                });
+
+                console.log(`[QUIZ] Host joined quiz ${quiz.code}`);
+            } catch (err)
+            {
+                console.error('[QUIZ] host-join error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to join quiz room'});
+            }
+        });
+
+        // ── Participant joins by room code ────────────────────────────────────
+        socket.on('quiz:participant-join', async ({code, name, userId}={}) =>
+        {
+            try
+            {
+                if (!code||!name) return socket.emit('quiz:error', {message: 'code and name are required'});
+
+                const quiz=await Quiz.findOne({code: code.toUpperCase()});
+                if (!quiz) return socket.emit('quiz:error', {message: 'Quiz not found. Check the room code.'});
+                if (quiz.status==='completed') return socket.emit('quiz:error', {message: 'This quiz has already ended.'});
+                if (['active', 'question_open', 'question_closed'].includes(quiz.status)&&!quiz.settings.allowLateJoin)
+                    return socket.emit('quiz:error', {message: 'Late joining is not allowed for this quiz.'});
+
+                const quizId=String(quiz._id);
+                const room=`quiz:${quizId}`;
+
+                // Add or update participant in DB
+                const existing=quiz.participants.find(p => p.participantId===socket.id||(userId&&String(p.userId)===String(userId)));
+                if (!existing)
+                {
+                    quiz.participants.push({
+                        participantId: socket.id,
+                        name: name.trim().slice(0, 30),
+                        userId: userId||null,
+                        score: 0,
+                        streak: 0,
+                        answers: [],
+                    });
+                    await quiz.save();
+                }
+
+                socket.join(room);
+                socketMeta.set(socket.id, {quizId, role: 'participant', name: name.trim(), participantId: socket.id});
+
+                // Init session if not already (host may not have connected yet)
+                if (!activeSessions.has(quizId))
+                {
+                    activeSessions.set(quizId, {quiz, questionTimers: new Map()});
+                } else
+                {
+                    activeSessions.get(quizId).quiz=quiz; // refresh
+                }
+
+                const participants=buildLeaderboard(quiz);
+
+                // Send current quiz state to this participant
+                const statePayload=buildParticipantStatePayload(quiz);
+                socket.emit('quiz:joined', {role: 'participant', ...statePayload, participants});
+
+                // Notify host and others
+                quizNS.to(room).emit('quiz:participant-update', {participants});
+
+                console.log(`[QUIZ] ${name} joined quiz ${quiz.code}`);
+            } catch (err)
+            {
+                console.error('[QUIZ] participant-join error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to join quiz'});
+            }
+        });
+
+        // ── Host starts quiz ──────────────────────────────────────────────────
+        socket.on('quiz:start', async ({quizId}={}) =>
+        {
+            try
+            {
+                const meta=socketMeta.get(socket.id);
+                if (!meta||meta.role!=='host'||meta.quizId!==quizId)
+                    return socket.emit('quiz:error', {message: 'Only the host can start the quiz'});
+
+                const quiz=await Quiz.findById(quizId);
+                if (!quiz) return socket.emit('quiz:error', {message: 'Quiz not found'});
+                if (!['waiting', 'draft'].includes(quiz.status))
+                    return socket.emit('quiz:error', {message: 'Quiz cannot be started from its current state'});
+                if (quiz.questions.length===0)
+                    return socket.emit('quiz:error', {message: 'Add questions before starting'});
+
+                quiz.status='active';
+                quiz.startedAt=new Date();
+                quiz.currentQuestionIndex=-1;
+                await quiz.save();
+
+                activeSessions.set(quizId, {quiz, questionTimers: new Map()});
+
+                const room=`quiz:${quizId}`;
+                quizNS.to(room).emit('quiz:started', {totalQuestions: quiz.questions.length});
+
+                // Open first question
+                await openQuestion(io, quizId, 0);
+            } catch (err)
+            {
+                console.error('[QUIZ] start error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to start quiz'});
+            }
+        });
+
+        // ── Host advances to next question ─────────────────────────────────────
+        socket.on('quiz:next-question', async ({quizId}={}) =>
+        {
+            try
+            {
+                const meta=socketMeta.get(socket.id);
+                if (!meta||meta.role!=='host'||meta.quizId!==quizId)
+                    return socket.emit('quiz:error', {message: 'Only the host can advance questions'});
+
+                const session=activeSessions.get(quizId);
+                if (!session) return socket.emit('quiz:error', {message: 'No active session'});
+
+                const {quiz}=session;
+                const next=quiz.currentQuestionIndex+1;
+
+                // Cancel existing auto-timer for this question
+                clearQuestionTimer(quizId);
+
+                if (next>=quiz.questions.length)
+                {
+                    await endQuiz(io, quizId);
+                } else
+                {
+                    // First close the current question (if open) then open next
+                    if (quiz.status==='question_open')
+                    {
+                        await closeQuestion(io, quizId);
+                    }
+                    // Small delay so clients can see results before next question
+                    setTimeout(() => openQuestion(io, quizId, next), 3000);
+                }
+            } catch (err)
+            {
+                console.error('[QUIZ] next-question error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to advance question'});
+            }
+        });
+
+        // ── Participant submits answer ─────────────────────────────────────────
+        socket.on('quiz:submit-answer', async ({quizId: rawQuizId, code, questionIndex, answer, timeMs=0}={}) =>
+        {
+            try
+            {
+                const meta=socketMeta.get(socket.id);
+                if (!meta||meta.role!=='participant')
+                    return socket.emit('quiz:error', {message: 'Only participants can submit answers'});
+
+                // quizId from meta (stored at join time) takes precedence
+                const quizId=meta.quizId||rawQuizId;
+                const quiz=await Quiz.findById(quizId);
+                if (!quiz||quiz.status!=='question_open')
+                    return socket.emit('quiz:error', {message: 'No open question to answer'});
+                if (questionIndex!==quiz.currentQuestionIndex)
+                    return socket.emit('quiz:error', {message: 'Question mismatch'});
+
+                const participant=quiz.participants.find(p => p.participantId===socket.id);
+                if (!participant) return socket.emit('quiz:error', {message: 'Participant not found'});
+
+                // Check not already answered
+                if (participant.answers.some(a => a.questionIndex===questionIndex))
+                    return socket.emit('quiz:error', {message: 'Already answered this question'});
+
+                const question=quiz.questions[questionIndex];
+                const correct=String(answer).trim().toLowerCase()===String(question.correctAnswer).trim().toLowerCase();
+
+                // Time bonus: up to 50% extra points for quick answers
+                const maxBonus=Math.round(question.points*0.5);
+                const timeFraction=Math.max(0, 1-(timeMs/(question.timeLimit*1000)));
+                const timeBonus=correct? Math.round(maxBonus*timeFraction):0;
+                const pointsEarned=correct? question.points+timeBonus:0;
+
+                if (correct)
+                    participant.streak=(participant.streak||0)+1;
+                else
+                    participant.streak=0;
+
+                // Streak bonus
+                const streakBonus=correct&&participant.streak>=3? Math.round(question.points*0.2):0;
+                const totalPoints=pointsEarned+streakBonus;
+
+                participant.score+=totalPoints;
+                participant.answers.push({questionIndex, answer: String(answer).trim(), correct, pointsEarned: totalPoints, timeMs});
+
+                await quiz.save();
+
+                // Update session cache
+                if (activeSessions.has(quizId)) activeSessions.get(quizId).quiz=quiz;
+
+                const leaderboard=buildLeaderboard(quiz);
+                const rank=leaderboard.findIndex(p => p.participantId===socket.id)+1;
+
+                socket.emit('quiz:answer-result', {
+                    correct,
+                    correctAnswer: question.correctAnswer,
+                    explanation: question.explanation,
+                    pointsEarned: totalPoints,
+                    totalScore: participant.score,
+                    streak: participant.streak,
+                    rank,
+                });
+
+                // Broadcast live leaderboard to host
+                const room=`quiz:${quizId}`;
+                quizNS.to(room).emit('quiz:leaderboard-live', {leaderboard});
+            } catch (err)
+            {
+                console.error('[QUIZ] submit-answer error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to submit answer'});
+            }
+        });
+
+        // ── Host ends quiz early ───────────────────────────────────────────────
+        socket.on('quiz:end', async ({quizId}={}) =>
+        {
+            try
+            {
+                const meta=socketMeta.get(socket.id);
+                if (!meta||meta.role!=='host'||meta.quizId!==quizId)
+                    return socket.emit('quiz:error', {message: 'Only the host can end the quiz'});
+
+                clearQuestionTimer(quizId);
+                await endQuiz(io, quizId);
+            } catch (err)
+            {
+                console.error('[QUIZ] end error:', err.message);
+                socket.emit('quiz:error', {message: 'Failed to end quiz'});
+            }
+        });
+
+        // ── Cleanup on disconnect ──────────────────────────────────────────────
+        socket.on('disconnect', async () =>
+        {
+            const meta=socketMeta.get(socket.id);
+            if (!meta) return;
+            socketMeta.delete(socket.id);
+
+            const {quizId, role, name}=meta;
+            try
+            {
+                if (role==='participant')
+                {
+                    const quiz=await Quiz.findById(quizId);
+                    if (quiz&&!['completed'].includes(quiz.status))
+                    {
+                        const room=`quiz:${quizId}`;
+                        const participants=buildLeaderboard(quiz);
+                        quizNS.to(room).emit('quiz:participant-update', {participants});
+                        console.log(`[QUIZ] Participant ${name} disconnected from quiz ${quizId}`);
+                    }
+                }
+            } catch (err)
+            {
+                console.error('[QUIZ] disconnect cleanup error:', err.message);
+            }
+        });
+    });
+}
+
+// ── Internal helpers ───────────────────────────────────────────────────────────
+async function openQuestion(io, quizId, index)
+{
+    const session=activeSessions.get(quizId);
+    if (!session) return;
+
+    const quiz=await Quiz.findById(quizId);
+    if (!quiz) return;
+
+    quiz.status='question_open';
+    quiz.currentQuestionIndex=index;
+    await quiz.save();
+    session.quiz=quiz;
+
+    const q=quiz.questions[index];
+    const room=`quiz:${quizId}`;
+
+    io.to(room).emit('quiz:question', {
+        questionIndex: index,
+        totalQuestions: quiz.questions.length,
+        timeLimit: q.timeLimit,
+        question: {
+            text: q.text,
+            type: q.type,
+            options: q.options,
+            points: q.points,
+            difficulty: q.difficulty,
+            // correctAnswer intentionally omitted
+        },
+    });
+
+    // Auto-close after timeLimit
+    const timer=setTimeout(() => closeQuestion(io, quizId), q.timeLimit*1000);
+    session.questionTimers.set(index, timer);
+
+    console.log(`[QUIZ] Opened question ${index+1}/${quiz.questions.length} for quiz ${quiz.code}`);
+}
+
+async function closeQuestion(io, quizId)
+{
+    const session=activeSessions.get(quizId);
+    if (!session) return;
+
+    const quiz=await Quiz.findById(quizId);
+    if (!quiz||quiz.status==='question_closed'||quiz.status==='completed') return;
+
+    const index=quiz.currentQuestionIndex;
+    const q=quiz.questions[index];
+
+    quiz.status='question_closed';
+    await quiz.save();
+    session.quiz=quiz;
+
+    clearQuestionTimer(quizId);
+
+    // Compute per-question stats
+    const answers=quiz.participants.map(p => p.answers.find(a => a.questionIndex===index)).filter(Boolean);
+    const correct=answers.filter(a => a.correct).length;
+    const stats={
+        totalAnswered: answers.length,
+        correctCount: correct,
+        accuracy: answers.length? Math.round((correct/answers.length)*100):0,
+    };
+
+    const leaderboard=buildLeaderboard(quiz);
+    const room=`quiz:${quizId}`;
+
+    io.to(room).emit('quiz:question-closed', {
+        questionIndex: index,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        stats,
+        leaderboard,
+    });
+
+    console.log(`[QUIZ] Closed question ${index+1} for quiz ${quiz.code}`);
+}
+
+async function endQuiz(io, quizId)
+{
+    const session=activeSessions.get(quizId);
+    if (!session) return;
+
+    clearQuestionTimer(quizId);
+
+    const quiz=await Quiz.findById(quizId);
+    if (!quiz||quiz.status==='completed') return;
+
+    quiz.status='completed';
+    quiz.endedAt=new Date();
+    await quiz.save();
+
+    const leaderboard=buildLeaderboard(quiz);
+    const room=`quiz:${quizId}`;
+
+    io.to(room).emit('quiz:ended', {
+        leaderboard,
+        quizId,
+        stats: {
+            totalParticipants: quiz.participants.length,
+            totalQuestions: quiz.questions.length,
+            duration: quiz.startedAt? Math.round((quiz.endedAt-quiz.startedAt)/1000):0,
+        },
+    });
+
+    activeSessions.delete(quizId);
+    console.log(`[QUIZ] Quiz ${quiz.code} ended`);
+}
+
+function clearQuestionTimer(quizId)
+{
+    const session=activeSessions.get(quizId);
+    if (!session) return;
+    for (const [, timer] of session.questionTimers)
+    {
+        clearTimeout(timer);
+    }
+    session.questionTimers.clear();
+}
+
+function sanitizeQuizForHost(quiz)
+{
+    return {
+        id: quiz._id,
+        code: quiz.code,
+        title: quiz.title,
+        topic: quiz.topic,
+        difficulty: quiz.difficulty,
+        status: quiz.status,
+        currentQuestionIndex: quiz.currentQuestionIndex,
+        totalQuestions: quiz.questions.length,
+        questionTimeLimit: quiz.questionTimeLimit,
+        questions: quiz.questions, // host sees all including correct answers
+        settings: quiz.settings,
+    };
+}
+
+function buildParticipantStatePayload(quiz)
+{
+    // For a participant joining mid-game, tell them the current state
+    if (quiz.status==='question_open')
+    {
+        const q=quiz.questions[quiz.currentQuestionIndex];
+        return {
+            status: quiz.status,
+            questionIndex: quiz.currentQuestionIndex,
+            totalQuestions: quiz.questions.length,
+            question: {text: q.text, type: q.type, options: q.options, points: q.points, difficulty: q.difficulty, timeLimit: q.timeLimit},
+        };
+    }
+    if (quiz.status==='question_closed')
+    {
+        const q=quiz.questions[quiz.currentQuestionIndex];
+        return {
+            status: quiz.status,
+            questionIndex: quiz.currentQuestionIndex,
+            totalQuestions: quiz.questions.length,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+        };
+    }
+    return {
+        status: quiz.status,
+        totalQuestions: quiz.questions.length,
+        title: quiz.title,
+        hostName: quiz.hostName,
+    };
+}
