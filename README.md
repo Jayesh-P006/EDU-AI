@@ -1,8 +1,6 @@
 # EDU-AI — AI-Powered Recruitment & Interview Platform
 
-> A full-stack intelligent hiring platform built for **IIT Gandhinagar** that automates the entire recruitment pipeline — from job posting and ATS screening to AI-driven interviews, live quizzes, coding contests, and proctored assessments.
-
----
+>A full-stack intelligent education platform built for LNCT BHOPAL that innovates the learning experience — from AI-driven personalized assessments and adaptive practice sessions to real-time interactive quizzes, coding contests, and secure proctored examinations.
 
 ## Table of Contents
 
