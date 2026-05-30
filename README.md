@@ -1,4 +1,4 @@
-# HireSpec — AI-Powered Recruitment & Interview Platform
+# EDU-AI — AI-Powered Recruitment & Interview Platform
 
 > A full-stack intelligent hiring platform built for **IIT Gandhinagar** that automates the entire recruitment pipeline — from job posting and ATS screening to AI-driven interviews, live quizzes, coding contests, and proctored assessments.
 
@@ -33,6 +33,7 @@
 - **Practice Interview Mode** for candidates to prepare
 - **AI Interview Reports** with detailed feedback and scoring
 - **Interview Scheduling** from company dashboard
+
 
 ### Live Quiz System
 - **Real-time Quiz Hosting** via WebSocket (Socket.IO)
@@ -70,6 +71,20 @@
 - **Spec AI Chat** — platform-specific AI helper
 - **Email Notifications** via Nodemailer (OTP, interview scheduling)
 - **AI Phone Calling** integration (Twilio)
+
+### AI-Driven Personalized Learning
+- **Adaptive Practice Sessions** — AI adjusts question difficulty based on student performance (Quick, Standard, Deep modes)
+- **AI-Powered Feedback Reports** — detailed scoring across technical knowledge, communication, problem-solving, and confidence with personalized strengths & improvement areas
+- **AI Code Mentor** — real-time code analysis with suggestions, complexity breakdown, and optimization tips for continuous learning
+- **Axiom Study AI** — context-aware AI tutor for personalized study guidance and doubt resolution
+- **Student Analytics Dashboard** — visual learning progress tracking, performance trends, and skill gap identification
+- **Practice Interview Simulator** — AI-generated mock interviews with real-time evaluation and post-session learning feedback
+
+### Educational Accessibility
+- **Accessible Remote Assessments** — proctored exams with face detection for secure remote participation from anywhere
+- **AI-Generated Question Banks** — auto-generate quiz and coding questions on any topic for adaptive assessments
+- **Multi-language Coding Support** — inclusive coding environment supporting JavaScript, Python, C++, and Java
+- **Real-time Collaborative Quizzes** — live classroom engagement tools with instant leaderboards for interactive learning
 
 ---
 
@@ -445,4 +460,4 @@ Ensure all environment variables are set in your hosting provider's dashboard.
 
 ## License
 
-This project was developed for **IIT Gandhinagar**. All rights reserved.
+This project was developed for **LNCT BHOPAL**. All rights reserved.
