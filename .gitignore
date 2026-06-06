@@ -1,6 +1,7 @@
 backend/.venv/
 backend/node_modules/
 frontend/node_modules/
+resume-verifier-v2/venv/
 
 **/node_modules/
 **/dist/
