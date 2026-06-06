@@ -1,0 +1,21 @@
+{
+  "name": "edu-ai-whiteboard-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host localhost --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host localhost --port 4173"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "dagre": "^0.8.5",
+    "lucide-react": "latest",
+    "mermaid": "^11.15.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "reactflow": "^11.11.4",
+    "vite": "latest"
+  }
+}
