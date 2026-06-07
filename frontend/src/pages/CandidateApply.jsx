@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,6 +7,9 @@ import {
   Shield, Loader, ArrowLeft, Lock, Star, ChevronRight, Zap, Search,
 } from 'lucide-react';
 import api from '../services/api';
+import { authService } from '../services/authService';
+import { useResumeUpload, useMultiProjectAnalysis } from '../hooks/useResumeVerification';
+import ResumeAnalysisPipeline from '../components/ResumeAnalysisPipeline';
 import './CandidateApply.css';
 
 const MOCK_JOBS = {
@@ -35,7 +38,7 @@ function FieldGroup({ label, required, children, error, hint }) {
   );
 }
 
-function FileUploadZone({ file, onFile, onRemove, error }) {
+function FileUploadZone({ file, onFile, onRemove, error, status }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
@@ -51,15 +54,22 @@ function FileUploadZone({ file, onFile, onRemove, error }) {
   const handleChange = useCallback((e) => { if (e.target.files[0]) onFile(e.target.files[0]); }, [onFile]);
 
   if (file) {
+    const ext = (file.name.split('.').pop() || '').toUpperCase();
     return (
       <motion.div className="ca-file-uploaded" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
-        <div className="ca-file-icon"><FileText size={22} color="#22c55e" /></div>
+        <div className="ca-file-icon"><FileText size={22} color={status === 'error' ? '#ef4444' : '#22c55e'} /></div>
         <div className="ca-file-info">
           <span className="ca-file-name">{file.name}</span>
-          <span className="ca-file-size">{(file.size / 1024).toFixed(1)} KB · PDF</span>
+          <span className="ca-file-size">{(file.size / 1024).toFixed(1)} KB · {ext}</span>
         </div>
-        <div className="ca-file-check"><CheckCircle size={18} color="#22c55e" /></div>
-        <button type="button" className="ca-file-remove" onClick={onRemove}>
+        <div className="ca-file-check">
+          {status === 'uploading'
+            ? <Loader size={18} className="ca-btn-spinner" color="var(--accent-orange)" />
+            : status === 'error'
+              ? <AlertCircle size={18} color="#ef4444" />
+              : <CheckCircle size={18} color="#22c55e" />}
+        </div>
+        <button type="button" className="ca-file-remove" onClick={onRemove} title="Remove and upload a different file">
           <X size={15} />
         </button>
       </motion.div>
@@ -114,10 +124,80 @@ export default function CandidateApply() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
+  const candidateId = authService.getUser()?.id || null;
+
+  // Immediately parse the resume on upload + auto-trigger GitHub verification.
+  // The backend (`POST /jobs/preview-resume`) returns full structured candidate
+  // data and kicks off the FastAPI verification pipeline in the same request.
+  const resumeUpload = useResumeUpload({
+    onSuccess: (parsed) => {
+      // Pre-fill empty fields from the extracted resume data — saves the
+      // candidate retyping what we already pulled out automatically.
+      setForm(f => ({
+        ...f,
+        fullName: f.fullName || parsed?.candidate?.name || '',
+        email: f.email || parsed?.candidate?.email || '',
+        phone: f.phone || parsed?.candidate?.phone || '',
+        githubUrl: f.githubUrl || parsed?.candidate?.github || '',
+        linkedinUrl: f.linkedinUrl || parsed?.candidate?.linkedin || '',
+        portfolioUrl: f.portfolioUrl || parsed?.candidate?.portfolio || '',
+      }));
+      setErrors(e => ({ ...e, resume: null }));
+    },
+  });
+
+  const parsedData = resumeUpload.data || null;
+  const extractedGithubUrl = parsedData?.githubProfile || parsedData?.candidate?.github || '';
+
+  const verification = useMultiProjectAnalysis(candidateId, {
+    enabled: Boolean(parsedData && extractedGithubUrl && resumeUpload.isSuccess),
+  });
+
+  // Derive a single pipeline stage driving the staged loading workflow UI
+  let pipelineStage = 'idle';
+  if (resumeUpload.isUploading) {
+    pipelineStage = resumeUpload.progress < 100 ? 'uploading' : 'parsing';
+  } else if (resumeUpload.isError) {
+    pipelineStage = 'error';
+  } else if (resumeUpload.isSuccess) {
+    if (!extractedGithubUrl) pipelineStage = 'parsed';
+    else if (verification.isRunning || !verification.data) pipelineStage = 'verifying';
+    else pipelineStage = 'complete';
+  }
+
+  const uploadErrorMessage = resumeUpload.error
+    ? (resumeUpload.error?.response?.data?.error
+        || resumeUpload.error?.response?.data?.message
+        || (resumeUpload.error?.code === 'ERR_CANCELED' ? 'Upload cancelled.' : 'Failed to parse resume. Please check the file and try again.'))
+    : null;
+
   function setField(key, val) {
     setForm(f => ({ ...f, [key]: val }));
     if (errors[key]) setErrors(e => ({ ...e, [key]: null }));
   }
+
+  // Resume selected/dropped — validate, store, and immediately kick off parsing
+  const handleResumeFile = useCallback((file) => {
+    const allowedExt = /\.(pdf|doc|docx)$/i;
+    if (!allowedExt.test(file.name)) {
+      setErrors(e => ({ ...e, resume: 'Only PDF, DOC or DOCX files are supported' }));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors(e => ({ ...e, resume: 'File is too large — maximum size is 10MB' }));
+      return;
+    }
+    setErrors(e => ({ ...e, resume: null }));
+    setResume(file);
+    resumeUpload.reset();
+    resumeUpload.upload(file);
+  }, [resumeUpload]);
+
+  const handleRemoveResume = useCallback(() => {
+    resumeUpload.cancel();
+    resumeUpload.reset();
+    setResume(null);
+  }, [resumeUpload]);
 
   function validate() {
     const errs = {};
@@ -278,7 +358,13 @@ export default function CandidateApply() {
               </div>
               <h2>Resume <span className="ca-required">*</span></h2>
             </div>
-            <FileUploadZone file={resume} onFile={setResume} onRemove={() => setResume(null)} error={errors.resume} />
+            <FileUploadZone
+              file={resume}
+              onFile={handleResumeFile}
+              onRemove={handleRemoveResume}
+              error={errors.resume}
+              status={resumeUpload.isUploading ? 'uploading' : (resumeUpload.isError ? 'error' : (resumeUpload.isSuccess ? 'success' : null))}
+            />
             <AnimatePresence>
               {errors.resume && (
                 <motion.span className="ca-field-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -286,6 +372,26 @@ export default function CandidateApply() {
                 </motion.span>
               )}
             </AnimatePresence>
+
+            {/* Live "Resume Parsing -> GitHub Verification" staged workflow.
+                Kicks off the moment a file is selected — no extra action needed. */}
+            {resume && pipelineStage !== 'idle' && (
+              <ResumeAnalysisPipeline
+                stage={pipelineStage}
+                uploadProgress={resumeUpload.progress}
+                parsedData={parsedData}
+                githubUrl={extractedGithubUrl}
+                verification={{
+                  isRunning: verification.isRunning,
+                  status: verification.status,
+                  data: verification.data,
+                  error: verification.isError ? 'Could not reach the GitHub verification service. It will keep retrying automatically.' : null,
+                }}
+                error={uploadErrorMessage}
+                onRetry={() => resume && resumeUpload.upload(resume)}
+                onCancel={resumeUpload.isUploading ? handleRemoveResume : null}
+              />
+            )}
           </motion.section>
 
           {/* GitHub Auto-Discovery Notice */}

@@ -39,6 +39,14 @@ def _build_hf_llm(model: str, temperature: float = 0.1) -> ChatHuggingFace:
     return ChatHuggingFace(llm=endpoint)
 
 
+def _build_custom_llm(temperature: float = 0.1) -> ChatHuggingFace:
+    """Builds the custom fine-tuned model client (settings.huggingface_custom_model).
+
+    Reserved for future integration — not part of the active fallback chain yet.
+    """
+    return _build_hf_llm(settings.huggingface_custom_model, temperature=temperature)
+
+
 def _build_groq_llm(temperature: float = 0.1):
     from langchain_groq import ChatGroq
     return ChatGroq(

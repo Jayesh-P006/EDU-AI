@@ -1,23 +1,21 @@
 /**
  * Face Recognition Service using Pinecone Vector Database
- * 
- * Receives pre-computed 128-dim face descriptors from the frontend
- * (extracted via face-api.js neural network models in the browser),
- * stores them in Pinecone, and queries for face verification during login.
- * 
- * Architecture:
- *   Browser (face-api.js) → 128-dim descriptor → Backend → Pinecone
+ *
+ * Stores raw 128-dim face descriptors from face-api.js in Pinecone.
+ * Verification uses Euclidean distance in the original 128-dim space —
+ * the metric face-api.js was trained on (same person < 0.5, different > 0.6).
+ * Pinecone is used only for approximate nearest-neighbour candidate retrieval.
  */
 
 import {Pinecone} from '@pinecone-database/pinecone';
 
-const INDEX_DIMENSION=parseInt(process.env.PINECONE_FACE_DIMENSION||'512', 10);
-const DESCRIPTOR_DIMENSION=128;  // face-api.js always produces 128-dim
-const MIN_SCORE=parseFloat(process.env.FACE_MIN_SCORE||'0.85');  // Raised from 0.4 for biometric security
-const RATIO_THRESHOLD=parseFloat(process.env.FACE_RATIO_THRESHOLD||'0.05');  // Raised from 0.18 for stricter matching
+const INDEX_DIMENSION = parseInt(process.env.PINECONE_FACE_DIMENSION || '512', 10);
+const DESCRIPTOR_DIMENSION = 128;
+// face-api.js Euclidean threshold: <0.5 strict, <0.6 lenient
+const EUCLIDEAN_THRESHOLD = parseFloat(process.env.FACE_EUCLIDEAN_THRESHOLD || '0.50');
 
-let pineconeIndex=null;
-let initError=null;
+let pineconeIndex = null;
+let initError = null;
 
 // ── Initialize Pinecone connection ──────────────────────────────────
 async function getIndex()
@@ -25,33 +23,25 @@ async function getIndex()
   if (pineconeIndex) return pineconeIndex;
   if (initError) throw new Error(initError);
 
-  const apiKey=process.env.PINECONE_FACE_API_KEY;
-  const indexName=process.env.PINECONE_FACE_INDEX;
-  const host=process.env.PINECONE_FACE_HOST;
+  const apiKey = process.env.PINECONE_FACE_API_KEY;
+  const indexName = process.env.PINECONE_FACE_INDEX;
+  const host = process.env.PINECONE_FACE_HOST;
 
   if (!apiKey)
   {
-    initError='Missing PINECONE_FACE_API_KEY';
+    initError = 'Missing PINECONE_FACE_API_KEY';
     throw new Error(initError);
   }
 
   try
   {
-    const pc=new Pinecone({apiKey});
-
-    if (host)
-    {
-      pineconeIndex=pc.index(indexName, host);
-    } else
-    {
-      pineconeIndex=pc.index(indexName);
-    }
-
+    const pc = new Pinecone({apiKey});
+    pineconeIndex = host ? pc.index(indexName, host) : pc.index(indexName);
     console.log(`[FACE-SERVICE] ✅ Connected to Pinecone index: ${indexName}`);
     return pineconeIndex;
   } catch (err)
   {
-    initError=`Pinecone init failed: ${err.message}`;
+    initError = `Pinecone init failed: ${err.message}`;
     console.error(`[FACE-SERVICE] ❌ ${initError}`);
     throw new Error(initError);
   }
@@ -61,81 +51,59 @@ async function getIndex()
 function validateDescriptor(descriptor)
 {
   if (!Array.isArray(descriptor)) return false;
-  if (descriptor.length!==DESCRIPTOR_DIMENSION) return false;
-  return descriptor.every(v => typeof v==='number'&&isFinite(v));
+  if (descriptor.length !== DESCRIPTOR_DIMENSION) return false;
+  return descriptor.every(v => typeof v === 'number' && isFinite(v));
 }
 
 // ── Pad a 128-dim descriptor to match the Pinecone index dimension ──
 function padToIndexDimension(vector)
 {
-  if (vector.length===INDEX_DIMENSION) return vector;
-  const padded=new Array(INDEX_DIMENSION).fill(0);
-  for (let i=0;i<vector.length;i++)
-  {
-    padded[i]=vector[i];
-  }
+  if (vector.length === INDEX_DIMENSION) return vector;
+  const padded = new Array(INDEX_DIMENSION).fill(0);
+  for (let i = 0; i < vector.length; i++) padded[i] = vector[i];
   return padded;
 }
 
-// ── L2 normalize a vector ───────────────────────────────────────────
-function l2Normalize(vector)
+// ── Euclidean distance in 128-dim space ─────────────────────────────
+// face-api.js was trained on Euclidean distance: same person < 0.6, different > 0.6
+function euclideanDistance(a, b)
 {
-  let norm=0;
-  for (let i=0;i<vector.length;i++)
+  let sum = 0;
+  for (let i = 0; i < DESCRIPTOR_DIMENSION; i++)
   {
-    norm+=vector[i]*vector[i];
+    const diff = a[i] - b[i];
+    sum += diff * diff;
   }
-  norm=Math.sqrt(norm)+1e-8;
-  return vector.map(v => v/norm);
-}
-
-// ── Average multiple descriptors into a master descriptor ───────────
-function averageDescriptors(descriptors)
-{
-  const avg=new Array(DESCRIPTOR_DIMENSION).fill(0);
-  for (const desc of descriptors)
-  {
-    for (let i=0;i<DESCRIPTOR_DIMENSION;i++)
-    {
-      avg[i]+=desc[i];
-    }
-  }
-  for (let i=0;i<DESCRIPTOR_DIMENSION;i++)
-  {
-    avg[i]/=descriptors.length;
-  }
-  return l2Normalize(avg);
+  return Math.sqrt(sum);
 }
 
 // ── Register face descriptors for a user ────────────────────────────
 /**
- * @param {string} userId - Unique user identifier
- * @param {number[][]} descriptors - Array of 128-dim face descriptor arrays
- *                                    (pre-computed by face-api.js in the browser)
+ * @param {string} userId
+ * @param {number[][]} descriptors - Array of 128-dim raw face descriptors from face-api.js
  */
 export async function registerFace(userId, descriptors)
 {
-  if (!descriptors||descriptors.length===0)
-  {
+  if (!descriptors || descriptors.length === 0)
     return {result: null, error: 'No face descriptors provided'};
-  }
 
-  // Validate all descriptors
-  for (let i=0;i<descriptors.length;i++)
+  for (let i = 0; i < descriptors.length; i++)
   {
     if (!validateDescriptor(descriptors[i]))
     {
-      console.error(`[FACE-SERVICE] Descriptor ${i} invalid: length=${descriptors[i]?.length}, expected=${DESCRIPTOR_DIMENSION}`);
+      console.error(`[FACE-SERVICE] Descriptor ${i} invalid: length=${descriptors[i]?.length}`);
       return {result: null, error: `Invalid descriptor at index ${i}`};
     }
   }
 
-  const index=await getIndex();
+  const index = await getIndex();
 
-  // Average all descriptors into a single master descriptor
-  const masterDescriptor=averageDescriptors(descriptors);
+  // Store the raw frontal (first/center) descriptor — no normalization.
+  // face-api.js Euclidean distance works on raw vectors; normalizing changes the metric.
+  const rawDescriptor = Array.from(descriptors[0]);
+  const paddedDescriptor = padToIndexDimension(rawDescriptor);
 
-  const metadata={
+  const metadata = {
     user_id: userId,
     samples: descriptors.length,
     created_at: new Date().toISOString(),
@@ -144,19 +112,9 @@ export async function registerFace(userId, descriptors)
 
   try
   {
-    const paddedDescriptor=padToIndexDimension(masterDescriptor);
-
-    await index.upsert([{
-      id: userId,
-      values: paddedDescriptor,
-      metadata,
-    }]);
-
-    console.log(`[FACE-SERVICE] ✅ Registered face for ${userId} with ${descriptors.length} samples (128→${INDEX_DIMENSION})`);
-    return {
-      result: {user_id: userId, samples: descriptors.length},
-      error: null,
-    };
+    await index.upsert([{id: userId, values: paddedDescriptor, metadata}]);
+    console.log(`[FACE-SERVICE] ✅ Registered face for ${userId} (raw 128-dim frontal descriptor)`);
+    return {result: {user_id: userId, samples: descriptors.length}, error: null};
   } catch (err)
   {
     console.error(`[FACE-SERVICE] ❌ Pinecone upsert failed: ${err.message}`);
@@ -173,33 +131,32 @@ export async function checkFaceExists(descriptor)
   try
   {
     if (!validateDescriptor(descriptor))
-    {
       return {exists: false, userId: null, error: 'Invalid descriptor'};
-    }
 
-    const index=await getIndex();
-    const paddedDescriptor=padToIndexDimension(descriptor);
+    const index = await getIndex();
 
-    const queryResult=await index.query({
-      vector: paddedDescriptor,
+    const queryResult = await index.query({
+      vector: padToIndexDimension(Array.from(descriptor)),
       topK: 1,
       includeMetadata: true,
+      includeValues: true,
     });
 
-    const matches=queryResult.matches||[];
-    if (matches.length===0)
-    {
+    const matches = queryResult.matches || [];
+    if (matches.length === 0) return {exists: false, userId: null, error: null};
+
+    const best = matches[0];
+    const storedRaw = best.values?.slice(0, DESCRIPTOR_DIMENSION);
+
+    if (!storedRaw || storedRaw.length !== DESCRIPTOR_DIMENSION)
       return {exists: false, userId: null, error: null};
-    }
 
-    const best=matches[0];
-    const score=best.score||0;
+    const dist = euclideanDistance(descriptor, storedRaw);
+    console.log(`[FACE-SERVICE] Face check: euclidean dist=${dist.toFixed(4)}, threshold=${EUCLIDEAN_THRESHOLD}`);
 
-    console.log(`[FACE-SERVICE] Face check: best score=${score.toFixed(4)}, threshold=${MIN_SCORE}`);
-
-    if (score>=MIN_SCORE)
+    if (dist < EUCLIDEAN_THRESHOLD)
     {
-      const userId=best.metadata?.user_id||best.id;
+      const userId = best.metadata?.user_id || best.id;
       return {exists: true, userId, error: null};
     }
 
@@ -213,8 +170,7 @@ export async function checkFaceExists(descriptor)
 
 // ── Verify a face (login) ───────────────────────────────────────────
 /**
- * @param {number[]} descriptor - A single 128-dim face descriptor
- *                                (pre-computed by face-api.js in the browser)
+ * @param {number[]} descriptor - A single 128-dim face descriptor from face-api.js
  */
 export async function verifyFace(descriptor)
 {
@@ -225,80 +181,56 @@ export async function verifyFace(descriptor)
       return {result: null, error: `Invalid descriptor (got length=${descriptor?.length}, expected=${DESCRIPTOR_DIMENSION})`};
     }
 
-    const index=await getIndex();
-    const paddedDescriptor=padToIndexDimension(descriptor);
+    const index = await getIndex();
 
-    const queryResult=await index.query({
-      vector: paddedDescriptor,
+    // Retrieve top candidates AND their stored raw vectors for Euclidean comparison
+    const queryResult = await index.query({
+      vector: padToIndexDimension(Array.from(descriptor)),
       topK: 5,
       includeMetadata: true,
+      includeValues: true,
     });
 
-    const matches=queryResult.matches||[];
-    console.log(`[FACE-SERVICE] Verify: ${matches.length} matches found`);
+    const matches = queryResult.matches || [];
+    console.log(`[FACE-SERVICE] Verify: ${matches.length} candidates found`);
 
-    if (matches.length===0)
+    if (matches.length === 0)
+      return {result: null, error: 'No registered faces found'};
+
+    // Find the candidate with the lowest Euclidean distance
+    let bestMatch = null;
+    let bestDist = Infinity;
+
+    for (const match of matches)
     {
-      return {result: null, error: 'No match found'};
-    }
+      const storedRaw = match.values?.slice(0, DESCRIPTOR_DIMENSION);
+      if (!storedRaw || storedRaw.length !== DESCRIPTOR_DIMENSION) continue;
 
-    for (let i=0;i<Math.min(matches.length, 3);i++)
-    {
-      const m=matches[i];
-      console.log(`[FACE-SERVICE]   Match ${i}: id=${m.id}, score=${(m.score||0).toFixed(4)}, user=${m.metadata?.user_id}`);
-    }
+      const dist = euclideanDistance(descriptor, storedRaw);
+      const userId = match.metadata?.user_id || match.id;
+      console.log(`[FACE-SERVICE]   Candidate: id=${match.id}, euclidean_dist=${dist.toFixed(4)}, user=${userId}`);
 
-    const best=matches[0];
-    const score=best.score||0;
-
-    if (score<MIN_SCORE)
-    {
-      console.log(`[FACE-SERVICE] Score ${score.toFixed(4)} below threshold ${MIN_SCORE}`);
-      return {result: null, error: `Low similarity: ${score.toFixed(3)}. Face not recognized.`};
-    }
-
-    // Additional check: verify the gap between best and second-best match
-    // If they're too close, the match is ambiguous
-    if (matches.length>=2)
-    {
-      const secondScore=matches[1].score||0;
-      const gap=score-secondScore;
-      console.log(`[FACE-SERVICE] Score gap between top-2: ${gap.toFixed(4)}`);
-      // If gap is very small and score isn't high, reject as ambiguous
-      if (gap<0.05&&score<0.6)
+      if (dist < bestDist)
       {
-        return {result: null, error: 'Ambiguous match. Please try again with better lighting.'};
+        bestDist = dist;
+        bestMatch = match;
       }
     }
 
-    const userId=best.metadata?.user_id||best.id;
+    if (!bestMatch)
+      return {result: null, error: 'Could not retrieve stored face data'};
 
-    // Adaptive update: slightly shift the stored embedding toward the new descriptor
-    try
+    if (bestDist >= EUCLIDEAN_THRESHOLD)
     {
-      const lr=0.05;
-      const fetchResult=await index.fetch([userId]);
-      const stored=fetchResult.records?.[userId];
-      if (stored&&stored.values)
-      {
-        const paddedDesc=padToIndexDimension(descriptor);
-        const updated=new Array(INDEX_DIMENSION);
-        for (let i=0;i<INDEX_DIMENSION;i++)
-        {
-          updated[i]=(1-lr)*stored.values[i]+lr*paddedDesc[i];
-        }
-        const normalized=l2Normalize(updated);
-        const meta={...(stored.metadata||{}), updated_at: new Date().toISOString()};
-        await index.upsert([{id: userId, values: normalized, metadata: meta}]);
-        console.log(`[FACE-SERVICE] Adaptive update applied for ${userId}`);
-      }
-    } catch (updateErr)
-    {
-      console.log(`[FACE-SERVICE] Adaptive update skipped: ${updateErr.message}`);
+      console.log(`[FACE-SERVICE] Rejected: best dist=${bestDist.toFixed(4)} >= threshold=${EUCLIDEAN_THRESHOLD}`);
+      return {result: null, error: 'Face not recognized. Please try again or use password login.'};
     }
+
+    const userId = bestMatch.metadata?.user_id || bestMatch.id;
+    console.log(`[FACE-SERVICE] ✅ Face verified: ${userId}, euclidean dist=${bestDist.toFixed(4)}`);
 
     return {
-      result: {user_id: userId, score},
+      result: {user_id: userId, score: parseFloat((1 - bestDist).toFixed(4))},
       error: null,
     };
   } catch (err)
@@ -313,7 +245,7 @@ export async function deleteFace(userId)
 {
   try
   {
-    const index=await getIndex();
+    const index = await getIndex();
     await index.deleteOne(userId);
     console.log(`[FACE-SERVICE] Deleted face data for ${userId}`);
     return {success: true};

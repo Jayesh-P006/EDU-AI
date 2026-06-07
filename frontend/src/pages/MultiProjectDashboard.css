@@ -827,6 +827,97 @@
 @media (max-width: 1100px) {
   .mpd-body { grid-template-columns: 260px 1fr; padding: 20px; }
 }
+/* Candidate Overview card */
+.mpd-overview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.mpd-overview-list li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+.mpd-overview-label {
+  color: var(--text-tertiary);
+  min-width: 92px;
+  flex-shrink: 0;
+}
+.mpd-overview-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mpd-overview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--info);
+  font-weight: 600;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mpd-overview-link:hover { text-decoration: underline; }
+
+/* Authenticity Analysis card */
+.mpd-authenticity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.mpd-auth-metric {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.mpd-auth-metric-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.mpd-auth-metric-val {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.mpd-auth-metric-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+.mpd-auth-recommendation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+}
+.mpd-auth-rec-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-bottom: 3px;
+}
+.mpd-auth-rec-text { font-size: 14px; font-weight: 600; }
+
 @media (max-width: 900px) {
   .mpd-body { grid-template-columns: 1fr; }
   .mpd-sidebar { position: static; }
@@ -837,4 +928,6 @@
 @media (max-width: 640px) {
   .mpd-drawer { width: 100vw; }
   .mpd-drawer-scores { grid-template-columns: repeat(2, 1fr); }
+  .mpd-overview-label { min-width: 76px; }
+  .mpd-authenticity-grid { grid-template-columns: 1fr; }
 }

@@ -71,9 +71,13 @@ export const authRateLimiter=createRateLimiter({
 });
 
 // API endpoints - moderate limit
+// NOTE: this is a single global bucket per IP shared across every /api/* route.
+// Dashboards fire many calls on load (jobs + stats + leaderboard + per-job
+// interview lookups) plus background polling (e.g. analysis status every 4s),
+// and in local dev everything shares one IP — so this needs real headroom.
 export const apiRateLimiter=createRateLimiter({
     windowMs: 60*1000, // 1 minute
-    maxRequests: 100,
+    maxRequests: 400,
 });
 
 // AI endpoints - moderate limit (needs headroom for active interview sessions)

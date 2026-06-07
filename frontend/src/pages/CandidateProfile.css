@@ -20,7 +20,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #667eea;
+  border-top-color: #FF6B35;
   border-radius: 50%;
   animation: cp-spin 0.8s linear infinite;
 }
@@ -51,7 +51,7 @@
 .cp-header-inner h1 {
   font-size: 1.3rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -88,9 +88,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(20, 184, 166, 0.1);
-  border: 1px solid rgba(20, 184, 166, 0.3);
-  color: #14b8a6;
+  background: rgba(255, 179, 102, 0.1);
+  border: 1px solid rgba(255, 179, 102, 0.3);
+  color: #FFB366;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -101,14 +101,14 @@
 }
 
 .cp-verify-btn:hover {
-  background: rgba(20, 184, 166, 0.2);
+  background: rgba(255, 179, 102, 0.2);
 }
 
 .cp-save-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   border: none;
   color: #fff;
   padding: 0.5rem 1.25rem;
@@ -186,7 +186,7 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,7 +228,7 @@
 
 .cp-completion-fill {
   height: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -265,9 +265,9 @@
 }
 
 .cp-nav-item.active {
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.08);
-  border-left: 3px solid #667eea;
+  color: #FF6B35;
+  background: rgba(255, 107, 53, 0.08);
+  border-left: 3px solid #FF6B35;
 }
 
 /* ── Main Content ── */
@@ -343,7 +343,7 @@
 .cp-field select:focus,
 .cp-field textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .cp-field textarea {
@@ -367,7 +367,7 @@
 }
 
 .cp-checkbox input[type="checkbox"] {
-  accent-color: #667eea;
+  accent-color: #FF6B35;
 }
 
 /* ── Resume ── */
@@ -424,8 +424,8 @@
 }
 
 .cp-upload-area:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
+  border-color: #FF6B35;
+  background: rgba(255, 107, 53, 0.05);
 }
 
 .cp-upload-area h3 {
@@ -459,7 +459,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   border: none;
   color: #fff;
   padding: 0.65rem 1.5rem;
@@ -510,7 +510,7 @@
   gap: 8px;
   font-size: 0.85rem;
   margin-bottom: 0.75rem;
-  color: #667eea;
+  color: #FF6B35;
 }
 
 .cp-parsed-items p {
@@ -538,27 +538,27 @@
 }
 
 .cp-skill-tag.technical {
-  background: rgba(102, 126, 234, 0.12);
-  color: #667eea;
-  border: 1px solid rgba(102, 126, 234, 0.25);
+  background: rgba(255, 107, 53, 0.12);
+  color: #FF6B35;
+  border: 1px solid rgba(255, 107, 53, 0.25);
 }
 
 .cp-skill-tag.soft {
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: rgba(255, 179, 102, 0.12);
+  color: #FFB366;
+  border: 1px solid rgba(255, 179, 102, 0.25);
 }
 
 .cp-skill-tag.category {
-  background: rgba(20, 184, 166, 0.12);
-  color: #14b8a6;
-  border: 1px solid rgba(20, 184, 166, 0.25);
+  background: rgba(255, 140, 66, 0.12);
+  color: #FF8C42;
+  border: 1px solid rgba(255, 140, 66, 0.25);
 }
 
 .cp-skill-tag.editable {
-  background: rgba(102, 126, 234, 0.12);
-  color: #667eea;
-  border: 1px solid rgba(102, 126, 234, 0.25);
+  background: rgba(255, 107, 53, 0.12);
+  color: #FF6B35;
+  border: 1px solid rgba(255, 107, 53, 0.25);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -608,16 +608,16 @@
 
 .cp-skills-input input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF6B35;
 }
 
 .cp-skills-input button {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(102, 126, 234, 0.15);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  color: #667eea;
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: #FF6B35;
   padding: 0.6rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -628,7 +628,7 @@
 }
 
 .cp-skills-input button:hover {
-  background: rgba(102, 126, 234, 0.25);
+  background: rgba(255, 107, 53, 0.25);
 }
 
 .cp-empty-hint {
@@ -692,9 +692,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px dashed rgba(102, 126, 234, 0.3);
-  color: #667eea;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px dashed rgba(255, 107, 53, 0.3);
+  color: #FF6B35;
   padding: 0.75rem 1.25rem;
   border-radius: 10px;
   cursor: pointer;
@@ -708,7 +708,7 @@
 }
 
 .cp-add-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(255, 107, 53, 0.2);
 }
 
 /* ── ATS Score ── */
@@ -733,7 +733,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   border: none;
   color: #fff;
   padding: 0.65rem 1.5rem;
@@ -818,7 +818,7 @@
 .cp-ats-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #667eea;
+  color: #FF6B35;
 }
 
 .cp-ats-detail-card p {
@@ -847,7 +847,7 @@
   content: '→';
   position: absolute;
   left: 0;
-  color: #667eea;
+  color: #FF6B35;
 }
 
 /* ── Resume Analyzer ── */
@@ -859,7 +859,7 @@
 }
 
 .cp-ats-btn.secondary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
 }
 
 .cp-jd-optional {
@@ -870,7 +870,7 @@
   cursor: pointer;
   font-size: 0.88rem;
   font-weight: 600;
-  color: #667eea;
+  color: #FF6B35;
   margin-bottom: 0.75rem;
 }
 
@@ -898,8 +898,8 @@
   justify-content: center;
   gap: 2.5rem;
   padding: 2.5rem 2rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.06), rgba(118, 75, 162, 0.04));
-  border: 1px solid rgba(102, 126, 234, 0.12);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.06), rgba(255, 140, 66, 0.04));
+  border: 1px solid rgba(255, 107, 53, 0.12);
   border-radius: 16px;
   margin-bottom: 2rem;
   position: relative;
@@ -914,7 +914,7 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -985,7 +985,7 @@
 }
 
 .cp-analyzer-card:hover {
-  border-color: rgba(102, 126, 234, 0.2);
+  border-color: rgba(255, 107, 53, 0.2);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -1042,7 +1042,7 @@
 .cp-score-fill.good { background: linear-gradient(90deg, #22c55e, #16a34a); }
 .cp-score-fill.fair { background: linear-gradient(90deg, #eab308, #f59e0b); }
 .cp-score-fill.poor { background: linear-gradient(90deg, #ef4444, #f87171); }
-.cp-score-fill:not(.good):not(.fair):not(.poor) { background: linear-gradient(90deg, #667eea, #764ba2); }
+.cp-score-fill:not(.good):not(.fair):not(.poor) { background: linear-gradient(90deg, #FF6B35, #FF8C42); }
 
 .cp-analyzer-tags {
   display: flex;
@@ -1055,9 +1055,9 @@
   font-size: 0.72rem;
   padding: 3px 10px;
   border-radius: 20px;
-  background: rgba(102, 126, 234, 0.1);
-  color: #a5b4fc;
-  border: 1px solid rgba(102, 126, 234, 0.15);
+  background: rgba(255, 107, 53, 0.1);
+  color: #FFB366;
+  border: 1px solid rgba(255, 107, 53, 0.15);
 }
 
 .cp-analyzer-stat {
@@ -1090,8 +1090,8 @@
 .check-fail { color: #ef4444; }
 
 .cp-analyzer-jd-section {
-  background: rgba(102, 126, 234, 0.04);
-  border: 1px solid rgba(102, 126, 234, 0.12);
+  background: rgba(255, 107, 53, 0.04);
+  border: 1px solid rgba(255, 107, 53, 0.12);
   border-radius: 10px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -1134,8 +1134,8 @@
 }
 
 .cp-analyzer-recommendations {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.04), rgba(118, 75, 162, 0.03));
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.04), rgba(255, 140, 66, 0.03));
+  border: 1px solid rgba(255, 107, 53, 0.1);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -1170,7 +1170,7 @@
   content: '→';
   position: absolute;
   left: 0;
-  color: #667eea;
+  color: #FF6B35;
   font-weight: 600;
 }
 
@@ -1199,7 +1199,7 @@
 
   .cp-nav-item.active {
     border-left: none;
-    border-bottom: 3px solid #667eea;
+    border-bottom: 3px solid #FF6B35;
   }
 
   .cp-form-grid {

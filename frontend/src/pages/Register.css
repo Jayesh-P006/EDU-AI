@@ -4,9 +4,9 @@
   justify-content: center;
   align-items: center;
   background: var(--bg-primary);
-  padding: 2rem;
+  padding: 2rem 1.5rem;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .register-page::before {
@@ -27,7 +27,7 @@
   left: -200px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.04) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -41,8 +41,15 @@
   width: 100%;
   position: relative;
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+}
+
+.register-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.3), transparent);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 /* ── Step Header ─────────────────────────────────────────────────── */
@@ -62,9 +69,9 @@
 }
 
 .reg-icon-blue {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.18);
+  color: #FF6B35;
 }
 
 .reg-icon-green {
@@ -80,9 +87,9 @@
 }
 
 .reg-icon-purple {
-  background: rgba(168, 85, 247, 0.1);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  color: #a855f7;
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.18);
+  color: #FF6B35;
 }
 
 .reg-step-header h2 {
@@ -118,7 +125,7 @@
 }
 
 .reg-progress-step.active {
-  background: #3b82f6;
+  background: #FF6B35;
 }
 
 /* ── Steps List ──────────────────────────────────────────────────── */
@@ -143,9 +150,9 @@
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.18);
+  color: #FF6B35;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,6 +194,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: border-color var(--transition-fast);
+  height: 44px;
 }
 
 .reg-role-btn:hover {
@@ -227,8 +235,8 @@
 }
 
 .reg-role-option.selected {
-  background: rgba(59, 130, 246, 0.1);
-  border-left: 2px solid #3b82f6;
+  background: rgba(255, 107, 53, 0.08);
+  border-left: 2px solid #FF6B35;
 }
 
 .reg-role-option small {
@@ -254,7 +262,7 @@
 
 .reg-form-group input {
   width: 100%;
-  height: 42px;
+  height: 44px;
   padding: 0 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-primary);
@@ -271,8 +279,8 @@
 
 .reg-form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.12);
 }
 
 .reg-form-error {
@@ -289,8 +297,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: #FF6B35;
+  color: #000;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
@@ -300,9 +308,9 @@
 }
 
 .reg-btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #FF8C42;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
 }
 
 .reg-btn-primary:disabled {
@@ -314,7 +322,7 @@
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
-  border-top-color: var(--bg-primary);
+  border-top-color: #000;
   border-radius: 50%;
   animation: regSpin 0.6s linear infinite;
 }
@@ -373,7 +381,7 @@
   height: 64px;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  border: 2px solid var(--border-primary);
+  border: 2px solid rgba(255, 107, 53, 0.3);
 }
 
 .reg-face-thumb img {
@@ -386,7 +394,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(255, 107, 53, 0.08);
 }
 
 /* ── Verified Email Badge ────────────────────────────────────────── */
@@ -439,10 +447,14 @@
 }
 
 .reg-bottom-link a {
-  color: var(--text-primary);
+  color: #FF6B35;
   text-decoration: none;
   font-weight: 600;
   margin-left: 4px;
+}
+
+.reg-bottom-link a:hover {
+  opacity: 0.8;
 }
 
 /* ── OTP Input ───────────────────────────────────────────────────── */
@@ -456,12 +468,27 @@
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 480px) {
+  .register-page {
+    padding: 1.5rem 1rem;
+    align-items: flex-start;
+  }
+
   .register-card {
-    padding: 1.75rem;
+    padding: 1.75rem 1.5rem;
     border-radius: var(--radius-lg);
   }
 
   .reg-step-header h2 {
     font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .register-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .register-card {
+    padding: 1.5rem 1.25rem;
   }
 }

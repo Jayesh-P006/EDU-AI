@@ -88,9 +88,9 @@ function ProctorDashboard()
 
     const getScoreStatus=(score) =>
     {
-        if (score>=80) return {text: 'Good', icon: '✅', color: '#10b981'};
-        if (score>=60) return {text: 'Warning', icon: '⚠️', color: '#f59e0b'};
-        return {text: 'Risk', icon: '❌', color: '#ef4444'};
+        if (score>=80) return {text: 'Good', color: '#10b981'};
+        if (score>=60) return {text: 'Warning', color: '#f59e0b'};
+        return {text: 'Risk', color: '#ef4444'};
     };
 
     const formatDuration=(minutes) =>
@@ -115,18 +115,18 @@ function ProctorDashboard()
     const formatEventType=(eventType) =>
     {
         const typeMap={
-            'no_face': '😶 No Face',
-            'multiple_faces': '👥 Multiple Faces',
-            'looking_away': '👁️ Looking Away',
-            'eyes_closed': '😴 Eyes Closed',
-            'window_blur': '🪟 Focus Lost',
-            'tab_switch': '🔄 Tab Switch',
-            'fullscreen_exit': '📺 Fullscreen Exit',
-            'copy_paste_attempt': '📋 Copy/Paste',
-            'ai_generated_code': '🤖 AI Code',
-            'large_paste': '📄 Large Paste',
-            'suspicious_typing': '⌨️ Suspicious Typing',
-            'auto_terminate': '⛔ Terminated',
+            'no_face': 'No Face',
+            'multiple_faces': 'Multiple Faces',
+            'looking_away': 'Looking Away',
+            'eyes_closed': 'Eyes Closed',
+            'window_blur': 'Focus Lost',
+            'tab_switch': 'Tab Switch',
+            'fullscreen_exit': 'Fullscreen Exit',
+            'copy_paste_attempt': 'Copy/Paste',
+            'ai_generated_code': 'AI Code',
+            'large_paste': 'Large Paste',
+            'suspicious_typing': 'Suspicious Typing',
+            'auto_terminate': 'Terminated',
         };
         return typeMap[eventType]||eventType;
     };
@@ -163,7 +163,7 @@ function ProctorDashboard()
         <div className="proctor-dashboard">
             <div className="dashboard-header">
                 <div className="header-content">
-                    <h1>🎯 Proctor Dashboard</h1>
+                    <h1>Proctor Dashboard</h1>
                     <p>Real-time monitoring of all active interview sessions</p>
                 </div>
                 <div className="header-actions">
@@ -172,7 +172,7 @@ function ProctorDashboard()
                         LIVE
                     </div>
                     <button className="refresh-btn" onClick={fetchSessions}>
-                        🔄 Refresh
+                        Refresh
                     </button>
                 </div>
             </div>
@@ -180,35 +180,35 @@ function ProctorDashboard()
             {/* Statistics Overview */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon">👥</div>
+                    <div className="stat-icon"><span style={{display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--accent-primary)'}} /></div>
                     <div className="stat-content">
                         <div className="stat-label">Active Sessions</div>
                         <div className="stat-value">{stats.total}</div>
                     </div>
                 </div>
                 <div className="stat-card good">
-                    <div className="stat-icon">✅</div>
+                    <div className="stat-icon"><span style={{display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: '#10b981'}} /></div>
                     <div className="stat-content">
                         <div className="stat-label">Good Standing</div>
                         <div className="stat-value">{stats.good}</div>
                     </div>
                 </div>
                 <div className="stat-card warning">
-                    <div className="stat-icon">⚠️</div>
+                    <div className="stat-icon"><span style={{display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: '#f59e0b'}} /></div>
                     <div className="stat-content">
                         <div className="stat-label">Warnings</div>
                         <div className="stat-value">{stats.warning}</div>
                     </div>
                 </div>
                 <div className="stat-card risk">
-                    <div className="stat-icon">❌</div>
+                    <div className="stat-icon"><span style={{display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: '#ef4444'}} /></div>
                     <div className="stat-content">
                         <div className="stat-label">High Risk</div>
                         <div className="stat-value">{stats.risk}</div>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">🚨</div>
+                    <div className="stat-icon"><span style={{display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: '#ef4444'}} /></div>
                     <div className="stat-content">
                         <div className="stat-label">Total Violations</div>
                         <div className="stat-value">{stats.totalViolations}</div>
@@ -221,7 +221,7 @@ function ProctorDashboard()
                 <div className="search-box">
                     <input
                         type="text"
-                        placeholder="🔍 Search by name, email, or session ID..."
+                        placeholder="Search by name, email, or session ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -237,19 +237,19 @@ function ProctorDashboard()
                         className={filterStatus==='risk'? 'active risk':''}
                         onClick={() => setFilterStatus('risk')}
                     >
-                        ❌ Risk
+                        Risk
                     </button>
                     <button
                         className={filterStatus==='warning'? 'active warning':''}
                         onClick={() => setFilterStatus('warning')}
                     >
-                        ⚠️ Warning
+                        Warning
                     </button>
                     <button
                         className={filterStatus==='good'? 'active good':''}
                         onClick={() => setFilterStatus('good')}
                     >
-                        ✅ Good
+                        Good
                     </button>
                 </div>
                 <div className="sort-buttons">
@@ -265,7 +265,7 @@ function ProctorDashboard()
             {/* Sessions Grid */}
             {filteredSessions.length===0? (
                 <div className="no-sessions">
-                    <div className="no-sessions-icon">🎯</div>
+                    <div className="no-sessions-icon"><span style={{display: 'inline-block', width: '20px', height: '20px', borderRadius: '50%', border: '3px solid var(--accent-primary)'}} /></div>
                     <h3>No active sessions</h3>
                     <p>Sessions will appear here when interviews are in progress</p>
                 </div>
@@ -293,7 +293,7 @@ function ProctorDashboard()
                                         </div>
                                     </div>
                                     <div className="session-status" style={{color: status.color}}>
-                                        <span>{status.icon}</span>
+                                        <span style={{display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: status.color}} />
                                         <span>{status.text}</span>
                                     </div>
                                 </div>
@@ -377,10 +377,10 @@ function ProctorDashboard()
                                         </div>
                                         <div className="session-actions">
                                             <button className="view-full-btn">
-                                                📋 View Full Report
+                                                View Full Report
                                             </button>
                                             <button className="join-session-btn">
-                                                🎥 Join Session
+                                                Join Session
                                             </button>
                                         </div>
                                     </div>

@@ -78,8 +78,8 @@ export default function QuizResults()
 
             {/* Tabs */}
             <div className="qr-tabs">
-                <button className={`qr-tab ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>🏆 Leaderboard</button>
-                <button className={`qr-tab ${activeTab === 'questions' ? 'active' : ''}`} onClick={() => setActiveTab('questions')}>📝 Questions</button>
+                <button className={`qr-tab ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>Leaderboard</button>
+                <button className={`qr-tab ${activeTab === 'questions' ? 'active' : ''}`} onClick={() => setActiveTab('questions')}>Questions</button>
             </div>
 
             {/* LEADERBOARD */}
@@ -91,7 +91,7 @@ export default function QuizResults()
                             {[1, 0, 2].map(idx => leaderboard[idx] && (
                                 <div className={`qr-podium-spot qr-podium-${idx + 1}`} key={idx}>
                                     <div className="qr-podium-avatar">{leaderboard[idx].name.charAt(0).toUpperCase()}</div>
-                                    <div className="qr-podium-medal">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                    <div className="qr-podium-medal">#{idx + 1}</div>
                                     <div className="qr-podium-name">{leaderboard[idx].name}</div>
                                     <div className="qr-podium-score">{leaderboard[idx].score} pts</div>
                                 </div>
@@ -113,7 +113,7 @@ export default function QuizResults()
                             <tbody>
                                 {leaderboard.map((p, i) => (
                                     <tr key={i} className={i < 3 ? 'qr-top3' : ''}>
-                                        <td className="qr-td-rank">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`}</td>
+                                        <td className="qr-td-rank">{i < 3 ? `#${i + 1}` : `#${p.rank}`}</td>
                                         <td className="qr-td-name">{p.name}</td>
                                         <td className="qr-td-score">{p.score}</td>
                                         <td className="qr-td-ans">{p.answers}</td>
@@ -135,7 +135,7 @@ export default function QuizResults()
                                 <div className="qr-q-content">
                                     <div className="qr-q-text">{q.text}</div>
                                     <div className="qr-q-answer">
-                                        <span className="qr-correct-badge">✅ {q.correctAnswer}</span>
+                                        <span className="qr-correct-badge">✓ {q.correctAnswer}</span>
                                         {q.explanation && <span className="qr-explanation"> — {q.explanation}</span>}
                                     </div>
                                     <div className="qr-q-stats">

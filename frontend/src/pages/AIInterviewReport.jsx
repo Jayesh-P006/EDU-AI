@@ -367,7 +367,7 @@ function AIInterviewReport()
             </div>
           ):verificationResult?.verified? (
             <div className="vr-banner-content">
-              <span className="vr-banner-icon">✅</span>
+              <span className="vr-banner-icon">✓</span>
               <div>
                 <h3>Resume Verification Passed!</h3>
                 <p>You scored <strong>{verificationResult.score}/100</strong> (required: {verificationResult.passThreshold}). Your resume skills have been verified.</p>
@@ -378,7 +378,7 @@ function AIInterviewReport()
             </div>
           ):verificationResult? (
             <div className="vr-banner-content">
-              <span className="vr-banner-icon">❌</span>
+              <span className="vr-banner-icon">✗</span>
               <div>
                 <h3>Verification Failed</h3>
                 <p>You scored <strong>{verificationResult.score}/100</strong> (required: {verificationResult.passThreshold}).{' '}
@@ -413,7 +413,7 @@ function AIInterviewReport()
           )}
         </div>
         <div className="header-actions">
-          <button onClick={() => window.print()} className="print-button">🖨️ Print</button>
+          <button onClick={() => window.print()} className="print-button">Print</button>
           <button onClick={() => navigate(getDashboardPath())} className="home-button">Dashboard</button>
         </div>
       </div>
@@ -443,7 +443,7 @@ function AIInterviewReport()
 
         {/* ── Skill radar + score bars ── */}
         <section className="report-section scores-section">
-          <h2>📊 Skill Breakdown</h2>
+          <h2>Skill Breakdown</h2>
           <div className="scores-grid">
             <div className="radar-container">
               <RadarChart data={radarData} size={300} />
@@ -459,7 +459,7 @@ function AIInterviewReport()
         {/* ── Topic-wise Performance ── */}
         {report.topicPerformance?.length>0&&(
           <section className="report-section topic-section">
-            <h2>📚 Topic-wise Performance</h2>
+            <h2>Topic-wise Performance</h2>
             <div className="topic-grid">
               {report.topicPerformance.map((tp) =>
               {
@@ -486,7 +486,7 @@ function AIInterviewReport()
         <div className="two-col">
           {report.performanceTrend?.scores?.length>1&&(
             <section className="report-section">
-              <h2>📈 Performance Trend</h2>
+              <h2>Performance Trend</h2>
               <div className="trend-container">
                 <TrendChart scores={report.performanceTrend.scores} size={320} />
                 <div className={`trend-badge ${report.performanceTrend.direction}`}>
@@ -502,14 +502,14 @@ function AIInterviewReport()
           )}
           {report.difficultyBreakdown?.length>0&&(
             <section className="report-section">
-              <h2>🎯 Difficulty Breakdown</h2>
+              <h2>Difficulty Breakdown</h2>
               <div className="difficulty-list">
                 {report.difficultyBreakdown.map((d) =>
                 {
-                  const icon=d.difficulty==='Easy'? '🟢':d.difficulty==='Hard'? '🔴':'🟡';
+                  const dotColor=d.difficulty==='Easy'? '#22c55e':d.difficulty==='Hard'? '#ef4444':'#eab308';
                   return (
                     <div key={d.difficulty} className="diff-row">
-                      <span className="diff-icon">{icon}</span>
+                      <span className="diff-icon" style={{display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: dotColor}} />
                       <span className="diff-label">{d.difficulty}</span>
                       <HBar label="" value={d.averageScore} />
                       <span className="diff-count">{d.count}Q</span>
@@ -524,7 +524,7 @@ function AIInterviewReport()
         {/* ── Per-question performance ── */}
         {report.questionResults?.length>0&&(
           <section className="report-section questions-section">
-            <h2>📝 Question-by-Question Analysis</h2>
+            <h2>Question-by-Question Analysis</h2>
             <div className="questions-chart">
               {report.questionResults.map((q) => (
                 <div className="q-bar-group" key={q.number}>
@@ -619,8 +619,8 @@ function AIInterviewReport()
                         <strong>Follow-up Questions:</strong>
                         {q.followUps.map((fu, i) => (
                           <div key={i} className="followup-item">
-                            <p className="fu-q">🤖 {fu.question}</p>
-                            {fu.answer&&<p className="fu-a">👤 {fu.answer}</p>}
+                            <p className="fu-q">{fu.question}</p>
+                            {fu.answer&&<p className="fu-a">{fu.answer}</p>}
                           </div>
                         ))}
                       </div>
@@ -635,7 +635,7 @@ function AIInterviewReport()
         {/* ── Strengths & Improvements ── */}
         <div className="two-col">
           <section className="report-section">
-            <h2>💪 Strengths</h2>
+            <h2>Strengths</h2>
             <ul className="tag-list green-list">
               {(report.strengths?.length? report.strengths:['No specific strengths identified']).map((s, i) => (
                 <li key={i}><span className="tag-icon">✓</span> {s}</li>
@@ -643,7 +643,7 @@ function AIInterviewReport()
             </ul>
           </section>
           <section className="report-section">
-            <h2>🎯 Areas for Improvement</h2>
+            <h2>Areas for Improvement</h2>
             <ul className="tag-list orange-list">
               {(report.improvements?.length? report.improvements:['No specific areas identified']).map((s, i) => (
                 <li key={i}><span className="tag-icon">→</span> {s}</li>
@@ -654,7 +654,7 @@ function AIInterviewReport()
 
         {/* ── Recommendation ── */}
         <section className="report-section rec-section" style={{borderLeft: `4px solid ${recColor}`}}>
-          <h2>🏆 Hiring Recommendation</h2>
+          <h2>Hiring Recommendation</h2>
           <div className="rec-content">
             <div className="rec-badge" style={{background: recColor}}>
               {rec.recommendation||'Pending'}
@@ -670,7 +670,7 @@ function AIInterviewReport()
         {/* ── Detailed Feedback ── */}
         {report.detailedFeedback&&(
           <section className="report-section">
-            <h2>📋 Detailed Feedback</h2>
+            <h2>Detailed Feedback</h2>
             <div className="feedback-block">{report.detailedFeedback}</div>
           </section>
         )}

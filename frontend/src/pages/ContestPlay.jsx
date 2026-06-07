@@ -425,7 +425,7 @@ export default function ContestPlay()
         return (
             <div className="cp-root">
                 <div className="cp-ended">
-                    <div className="cp-ended-icon">🏆</div>
+                    <div className="cp-ended-icon"><Trophy size={56} /></div>
                     <div className="cp-ended-title">Contest Complete!</div>
                     <div className="cp-ended-sub">{contestTitle}</div>
                     <div className="cp-ended-stats">

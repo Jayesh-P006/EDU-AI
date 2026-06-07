@@ -56,20 +56,15 @@ export function areModelsLoaded() {
 
 /**
  * Detect a single face in a base64 image and return its 128-dim descriptor.
- * 
- * @param {string} base64Image - The base64-encoded image (with or without data URI prefix)
- * @returns {Promise<{descriptor: number[], detection: object} | null>}
- *          Returns null if no face detected.
+ * Returns null if no face detected.
  */
 export async function extractDescriptor(base64Image) {
   if (!modelsLoaded) {
     await loadFaceModels();
   }
 
-  // Create an HTMLImageElement from the base64 string
   const img = await createImageElement(base64Image);
 
-  // Detect single face with landmarks + descriptor
   const result = await faceapi
     .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
     .withFaceLandmarks()
@@ -83,7 +78,77 @@ export async function extractDescriptor(base64Image) {
   console.log(`[FACE-REC] Face detected: confidence=${result.detection.score.toFixed(3)}, descriptor dim=${result.descriptor.length}`);
 
   return {
-    descriptor: Array.from(result.descriptor), // Float32Array → regular array
+    descriptor: Array.from(result.descriptor),
+    detection: {
+      score: result.detection.score,
+      box: result.detection.box,
+    },
+  };
+}
+
+/**
+ * Strict face extraction with full validation for registration.
+ * Returns { descriptor, detection } on success, or throws an Error with a user-facing message.
+ *
+ * Checks (in order):
+ *  1. Multiple faces in frame
+ *  2. No face detected
+ *  3. Detection confidence too low (blurry / dark)
+ *  4. Face bounding-box too small (person too far away)
+ *  5. Eyes closed
+ */
+export async function extractDescriptorStrict(base64Image) {
+  if (!modelsLoaded) {
+    await loadFaceModels();
+  }
+
+  const img = await createImageElement(base64Image);
+
+  // ── 1. Count all faces first ───────────────────────────────────────
+  const allFaces = await faceapi.detectAllFaces(
+    img,
+    new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })
+  );
+
+  if (allFaces.length > 1) {
+    throw new Error(`Multiple faces detected (${allFaces.length}) — only you should be in the frame`);
+  }
+
+  // ── 2. Detect the single face with full info ───────────────────────
+  const result = await faceapi
+    .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+    .withFaceLandmarks()
+    .withFaceDescriptor();
+
+  if (!result) {
+    throw new Error('No face detected — keep your face clearly visible and try again');
+  }
+
+  // ── 3. Confidence threshold ────────────────────────────────────────
+  if (result.detection.score < 0.7) {
+    throw new Error('Face not clear enough — improve lighting and remove obstructions');
+  }
+
+  // ── 4. Face size (too far away) ────────────────────────────────────
+  const { width: faceW, height: faceH } = result.detection.box;
+  const imgArea = img.naturalWidth * img.naturalHeight;
+  const faceArea = faceW * faceH;
+  if (imgArea > 0 && faceArea / imgArea < 0.04) {
+    throw new Error('Face too small — move closer to the camera');
+  }
+
+  // ── 5. Eyes open check ─────────────────────────────────────────────
+  const landmarks = result.landmarks;
+  const leftEAR = eyeAspectRatio(landmarks.getLeftEye());
+  const rightEAR = eyeAspectRatio(landmarks.getRightEye());
+  if ((leftEAR + rightEAR) / 2 < 0.18) {
+    throw new Error('Eyes appear closed — open your eyes and look at the camera');
+  }
+
+  console.log(`[FACE-REC] Strict OK: confidence=${result.detection.score.toFixed(3)}, faceArea=${(faceArea/imgArea*100).toFixed(1)}%`);
+
+  return {
+    descriptor: Array.from(result.descriptor),
     detection: {
       score: result.detection.score,
       box: result.detection.box,
@@ -116,6 +181,24 @@ export async function extractDescriptors(images) {
   }
 
   return descriptors;
+}
+
+/**
+ * Count faces visible in a video/image element without full landmark processing.
+ * Lightweight — suitable for a continuous live-detection loop.
+ *
+ * @param {HTMLVideoElement|HTMLImageElement} input
+ * @returns {Promise<number>} number of faces detected
+ */
+export async function countFaces(input) {
+  if (!modelsLoaded) return 0;
+  // Use a low confidence threshold (0.3) so partial/half faces on the edges
+  // are still counted — this is a security gate, not a recognition step.
+  const detections = await faceapi.detectAllFaces(
+    input,
+    new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })
+  );
+  return detections.length;
 }
 
 /**

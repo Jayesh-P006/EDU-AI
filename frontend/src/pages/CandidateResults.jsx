@@ -38,17 +38,6 @@ function levelColor(level)
     default: return '#ef4444';
   }
 }
-function levelIcon(level)
-{
-  switch (level)
-  {
-    case 'Expert': return '🏆';
-    case 'Advanced': return '🔷';
-    case 'Intermediate': return '🔶';
-    default: return '🔸';
-  }
-}
-
 const SECTION_CHART_COLORS=['#6366f1', '#a855f7', '#14b8a6', '#f59e0b', '#ec4899'];
 
 export default function CandidateResults()
@@ -317,7 +306,7 @@ export default function CandidateResults()
                 {candidate.skills.sort((a, b) => b.score-a.score).map(s => (
                   <div className="cres-skill-card" key={s.name}>
                     <div className="cres-sk-top">
-                      <span className="cres-sk-emoji">{levelIcon(s.level)}</span>
+                      <span className="cres-sk-emoji" style={{display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: levelColor(s.level)}} />
                       <div>
                         <strong>{s.name}</strong>
                         <span className="cres-sk-level" style={{color: levelColor(s.level)}}>{s.level}</span>
@@ -351,7 +340,7 @@ export default function CandidateResults()
                     const isYou=c.name===candidate.name;
                     return (
                       <div className={`cres-podium-card podium-${idx+1} ${isYou? 'is-you':''}`} key={c.rank}>
-                        <div className="cres-podium-rank">{['🥇', '🥈', '🥉'][idx]}</div>
+                        <div className="cres-podium-rank">{['#1', '#2', '#3'][idx]}</div>
                         <div className="cres-podium-avatar">{c.name.charAt(0)}</div>
                         <strong>{isYou? 'You':c.name}</strong>
                         <span className="cres-podium-score">{c.overall}</span>

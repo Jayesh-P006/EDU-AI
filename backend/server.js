@@ -127,14 +127,15 @@ app.use('/api/ai-interview/', aiRateLimiter);
 
 // Code execution gets strict limits for security
 app.use('/api/code-execution/', codeExecutionRateLimiter);
-app.use('/api/coding-practice/', codeExecutionRateLimiter);
-
-// AI generation endpoints need longer timeout (120s) as they call Groq + validate test cases
-app.use('/api/coding-practice/generate', aiTimeoutMiddleware);
-app.use('/api/coding-practice/hint', aiTimeoutMiddleware);
-app.use('/api/coding-practice/detect', aiTimeoutMiddleware);
-app.use('/api/coding-practice/analyze', aiTimeoutMiddleware);
-app.use('/api/coding-practice/prompt', aiTimeoutMiddleware);
+// Only apply code execution rate limit to actual execution routes, not data reads like /questions
+app.use('/api/coding-practice/run', codeExecutionRateLimiter);
+app.use('/api/coding-practice/submit', codeExecutionRateLimiter);
+// AI generation endpoints in coding-practice get AI rate limit + longer timeout
+app.use('/api/coding-practice/generate', aiRateLimiter, aiTimeoutMiddleware);
+app.use('/api/coding-practice/hint', aiRateLimiter, aiTimeoutMiddleware);
+app.use('/api/coding-practice/detect', aiRateLimiter, aiTimeoutMiddleware);
+app.use('/api/coding-practice/analyze', aiRateLimiter, aiTimeoutMiddleware);
+app.use('/api/coding-practice/prompt', aiRateLimiter, aiTimeoutMiddleware);
 
 // General API rate limiting
 app.use('/api/', apiRateLimiter);

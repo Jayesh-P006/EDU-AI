@@ -56,6 +56,26 @@ function verifyPassword(password, stored)
   return hash===verify;
 }
 
+// ── Check Face (pre-registration duplicate check) ───────────────────
+router.post('/check-face', async (req, res) =>
+{
+  try
+  {
+    const {descriptor}=req.body;
+    if (!descriptor||!Array.isArray(descriptor))
+    {
+      return APIResponse.error(res, 'No face descriptor provided', 400);
+    }
+
+    const {exists, userId}=await checkFaceExists(descriptor);
+    return APIResponse.success(res, {exists, userId: exists? userId:null});
+  } catch (err)
+  {
+    console.error('[AUTH] check-face error:', err);
+    return APIResponse.error(res, err.message, 500);
+  }
+});
+
 // ── Send OTP ────────────────────────────────────────────────────────
 router.post('/send-otp', async (req, res) =>
 {
@@ -304,6 +324,7 @@ router.post('/login', async (req, res) =>
         email: user.email,
         role: user.role,
         companyName: user.companyName,
+        github: user.github || '',
         createdAt: user.createdAt,
       },
     }, 'Login successful');
@@ -360,6 +381,7 @@ router.post('/face-login', async (req, res) =>
         email: user.email,
         role: user.role,
         companyName: user.companyName,
+        github: user.github || '',
         faceScore: matchScore,
         createdAt: user.createdAt,
       },
@@ -406,6 +428,7 @@ router.get('/verify', async (req, res) =>
         email: user.email,
         role: user.role,
         companyName: user.companyName,
+        github: user.github || '',
         faceRegistered: user.faceRegistered,
         createdAt: user.createdAt,
       },

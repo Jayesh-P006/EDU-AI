@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Any
+from typing import Optional, Any, List
 from datetime import datetime
 
 
@@ -152,4 +152,5 @@ class HealthResponse(BaseModel):
     database: str
     redis: str
     huggingface: str
+    models: List[str] = []
     version: str = "2.0.0"

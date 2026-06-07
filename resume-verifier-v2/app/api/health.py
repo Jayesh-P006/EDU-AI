@@ -53,4 +53,9 @@ async def health(db: AsyncSession = Depends(get_db)) -> HealthResponse:
         database=db_status,
         redis=redis_status,
         huggingface=huggingface_status,
+        models=[
+            settings.huggingface_model,
+            settings.huggingface_pro_model,
+            settings.huggingface_custom_model,
+        ],
     )

@@ -246,12 +246,12 @@ export default function QuizDashboard()
         <div className="qd-root">
             {/* Sidebar */}
             <aside className="qd-sidebar">
-                <div className="qd-brand">🎯 Quiz Manager</div>
+                <div className="qd-brand">Quiz Manager</div>
                 <nav className="qd-nav">
-                    <button className={`qd-nav-btn ${view==='list'? 'active':''}`} onClick={() => setView('list')}>📋 My Quizzes</button>
-                    <button className={`qd-nav-btn ${view==='create'? 'active':''}`} onClick={() => {setView('create'); setForm({title: '', topic: '', description: '', difficulty: 'medium', questionTimeLimit: 20, duration: 60});}}>➕ New Quiz</button>
-                    <button className={`qd-nav-btn ${view==='browse'? 'active':''}`} onClick={() => setView('browse')}>🌐 Browse Quizzes</button>
-                    <button className={`qd-nav-btn ${view==='join'? 'active':''}`} onClick={() => {setView('join'); setJoinQuizInfo(null);}}>🎮 Join Quiz</button>
+                    <button className={`qd-nav-btn ${view==='list'? 'active':''}`} onClick={() => setView('list')}>My Quizzes</button>
+                    <button className={`qd-nav-btn ${view==='create'? 'active':''}`} onClick={() => {setView('create'); setForm({title: '', topic: '', description: '', difficulty: 'medium', questionTimeLimit: 20, duration: 60});}}>New Quiz</button>
+                    <button className={`qd-nav-btn ${view==='browse'? 'active':''}`} onClick={() => setView('browse')}>Browse Quizzes</button>
+                    <button className={`qd-nav-btn ${view==='join'? 'active':''}`} onClick={() => {setView('join'); setJoinQuizInfo(null);}}>Join Quiz</button>
                 </nav>
             </aside>
 
@@ -271,7 +271,7 @@ export default function QuizDashboard()
                             :quizzes.length===0
                                 ? (
                                     <div className="qd-empty">
-                                        <span className="qd-empty-icon">📝</span>
+                                        <span className="qd-empty-icon" style={{display: 'inline-block', width: '48px', height: '48px', borderRadius: '50%', border: '3px solid var(--accent-primary, #FF6B35)'}} />
                                         <p>No quizzes yet. Create your first one!</p>
                                         <button className="qd-btn-primary" onClick={() => setView('create')}>Create Quiz</button>
                                     </div>
@@ -288,8 +288,8 @@ export default function QuizDashboard()
                                                 <p className="qd-card-topic">{q.topic}</p>
                                                 <div className="qd-card-meta">
                                                     <span style={{color: DIFFICULTY_COLORS[q.difficulty]}}>● {q.difficulty}</span>
-                                                    <span>📝 {q.questionCount} Q</span>
-                                                    <span>👥 {q.participantCount}</span>
+                                                    <span>{q.questionCount} Q</span>
+                                                    <span>{q.participantCount}</span>
                                                     <span>⏱ {q.duration||60}min</span>
                                                 </div>
                                                 <div className="qd-card-actions">
@@ -328,7 +328,7 @@ export default function QuizDashboard()
                         <div className="qd-browse-header">
                             <h2 className="qd-heading">Browse Quizzes</h2>
                             <button className="qd-btn-secondary" onClick={fetchPublicQuizzes} disabled={browseLoading}>
-                                {browseLoading? '⏳ Refreshing…':'🔄 Refresh'}
+                                {browseLoading? 'Refreshing…':'Refresh'}
                             </button>
                         </div>
                         <p className="qd-browse-hint">All open and live quizzes — click Join to enter a room.</p>
@@ -337,7 +337,7 @@ export default function QuizDashboard()
                             :publicQuizzes.length===0
                                 ? (
                                     <div className="qd-empty">
-                                        <span className="qd-empty-icon">🔍</span>
+                                        <span className="qd-empty-icon" style={{display: 'inline-block', width: '48px', height: '48px', borderRadius: '50%', border: '3px solid var(--accent-primary, #FF6B35)'}} />
                                         <p>No active quizzes right now. Check back soon, or join directly with a room code.</p>
                                         <button className="qd-btn-primary" onClick={() => setView('join')}>Join by Code</button>
                                     </div>
@@ -354,16 +354,16 @@ export default function QuizDashboard()
                                                 <p className="qd-card-topic">{q.topic}</p>
                                                 <div className="qd-card-meta">
                                                     <span style={{color: DIFFICULTY_COLORS[q.difficulty]}}>● {q.difficulty}</span>
-                                                    <span>📝 {q.questionCount} Q</span>
-                                                    <span>👥 {q.participantCount}</span>
-                                                    <span>🎙 {q.hostName}</span>
+                                                    <span>{q.questionCount} Q</span>
+                                                    <span>{q.participantCount}</span>
+                                                    <span>{q.hostName}</span>
                                                 </div>
                                                 <div className="qd-card-actions">
                                                     <button
                                                         className="qd-btn-sm qd-btn-start"
                                                         onClick={() => navigate(`/quiz/join?code=${q.code}`)}
                                                     >
-                                                        🎮 Join Quiz
+                                                        Join Quiz
                                                     </button>
                                                 </div>
                                             </div>
@@ -442,16 +442,16 @@ export default function QuizDashboard()
                         {/* AI Generation Panel */}
                         <div className="qd-gen-bar">
                             <button className="qd-btn-ai" onClick={() => setGenPanel(v => !v)}>
-                                ✨ {genPanel? 'Hide AI Generator':'Generate with AI'}
+                                {genPanel? 'Hide AI Generator':'Generate with AI'}
                             </button>
                             <button className="qd-btn-secondary" onClick={() => setShowQForm(v => !v)}>
-                                ➕ {showQForm? 'Hide Manual Form':'Add Question Manually'}
+                                {showQForm? 'Hide Manual Form':'Add Question Manually'}
                             </button>
                         </div>
 
                         {genPanel&&(
                             <div className="qd-gen-panel">
-                                <h3>✨ AI Question Generator</h3>
+                                <h3>AI Question Generator</h3>
                                 <div className="qd-form-row-group">
                                     <div className="qd-form-row">
                                         <label>Topic</label>
@@ -478,7 +478,7 @@ export default function QuizDashboard()
                                     </div>
                                 </div>
                                 <button className="qd-btn-ai" onClick={handleGenerate} disabled={generating}>
-                                    {generating? '⏳ Generating…':'✨ Generate Questions'}
+                                    {generating? 'Generating…':'Generate Questions'}
                                 </button>
                             </div>
                         )}
@@ -542,7 +542,7 @@ export default function QuizDashboard()
                                     <h3>{questions.length} Question{questions.length!==1? 's':''}</h3>
                                     <div>
                                         <button className="qd-btn-sm" onClick={() => saveQuestions(true)} disabled={savingQ}>
-                                            {savingQ? 'Saving…':'💾 Save All'}
+                                            {savingQ? 'Saving…':'Save All'}
                                         </button>
                                     </div>
                                 </div>
@@ -578,7 +578,7 @@ export default function QuizDashboard()
                                                     </div>
                                                 )}
                                                 <div className="qd-q-answer">
-                                                    ✅ <strong>{q.correctAnswer}</strong>
+                                                    ✓ <strong>{q.correctAnswer}</strong>
                                                     {q.explanation&&<span className="qd-q-exp"> — {q.explanation}</span>}
                                                 </div>
                                             </div>
@@ -588,7 +588,7 @@ export default function QuizDashboard()
                                 </div>
                                 <div className="qd-save-bar">
                                     <button className="qd-btn-primary" onClick={() => saveQuestions(true)} disabled={savingQ}>
-                                        {savingQ? '⏳ Saving…':`💾 Save ${questions.length} Questions`}
+                                        {savingQ? 'Saving…':`Save ${questions.length} Questions`}
                                     </button>
                                 </div>
                             </div>
@@ -596,7 +596,7 @@ export default function QuizDashboard()
 
                         {questions.length===0&&!genPanel&&!showQForm&&(
                             <div className="qd-empty">
-                                <span className="qd-empty-icon">💡</span>
+                                <span className="qd-empty-icon" style={{display: 'inline-block', width: '48px', height: '48px', borderRadius: '50%', border: '3px solid var(--accent-primary, #FF6B35)'}} />
                                 <p>No questions yet. Use AI generation or add manually.</p>
                             </div>
                         )}
@@ -609,7 +609,7 @@ export default function QuizDashboard()
                         <h2 className="qd-heading">Join a Quiz</h2>
                         <div className="qd-join-container">
                             <div className="qd-join-card">
-                                <div className="qd-join-icon">🎯</div>
+                                <div className="qd-join-icon"><span style={{display: 'inline-block', width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--accent-primary, #FF6B35)'}} /></div>
 
                                 {!joinQuizInfo
                                     ? (
@@ -624,7 +624,7 @@ export default function QuizDashboard()
                                                 autoFocus
                                             />
                                             <button className="qd-btn-primary" type="submit" disabled={joinLoading}>
-                                                {joinLoading? '⏳ Checking…':'Find Quiz →'}
+                                                {joinLoading? 'Checking…':'Find Quiz →'}
                                             </button>
                                         </form>
                                     )
@@ -634,8 +634,8 @@ export default function QuizDashboard()
                                                 <h3>{joinQuizInfo.title}</h3>
                                                 <div className="qd-join-meta">
                                                     <span className={`qd-badge qd-badge-${joinQuizInfo.difficulty}`}>{joinQuizInfo.difficulty}</span>
-                                                    <span>📝 {joinQuizInfo.questionCount} questions</span>
-                                                    <span>🎙 Host: {joinQuizInfo.hostName}</span>
+                                                    <span>{joinQuizInfo.questionCount} questions</span>
+                                                    <span>Host: {joinQuizInfo.hostName}</span>
                                                 </div>
                                             </div>
                                             <form className="qd-join-form" onSubmit={handleJoinSubmit}>
@@ -647,7 +647,7 @@ export default function QuizDashboard()
                                                     maxLength={30}
                                                     autoFocus
                                                 />
-                                                <button className="qd-btn-primary" type="submit">Join Now 🚀</button>
+                                                <button className="qd-btn-primary" type="submit">Join Now</button>
                                                 <button className="qd-btn-secondary" type="button" onClick={() => {setJoinQuizInfo(null); setJoinCode('');}}>
                                                     ‹ Different code
                                                 </button>

@@ -3,7 +3,17 @@ import multer from 'multer';
 import axios from 'axios';
 import {createRequire} from 'module';
 const require=createRequire(import.meta.url);
-const pdfParse=require('pdf-parse');
+const {PDFParse}=require('pdf-parse');
+
+async function extractPdfText(buffer) {
+  const parser = new PDFParse({data: buffer});
+  try {
+    const result = await parser.getText();
+    return result?.text || '';
+  } finally {
+    await parser.destroy();
+  }
+}
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
 import User from '../models/User.js';
@@ -38,12 +48,17 @@ function extractGithubUrls(text) {
 
 // Fire-and-forget: kick off GitHub repo verification without blocking the apply response
 function triggerResumeVerification(candidateId, resumeText, githubProfile = '') {
-  if (!resumeText || resumeText.length < 30) return;
-  console.log(`[JOBS] Triggering FastAPI for ${candidateId} | github="${githubProfile}" | text=${resumeText.length}chars`);
-  // Pass githubProfile so FastAPI can call GitHub API when PDF links are not plain text
+  const hasText = resumeText && resumeText.length >= 10;
+  const hasGithub = githubProfile && githubProfile.trim().length > 0;
+  if (!hasText && !hasGithub) {
+    console.warn(`[JOBS] Skipping verification for ${candidateId} — no resume text and no GitHub profile`);
+    return;
+  }
+  const safeText = hasText ? resumeText : `github: ${githubProfile}`;
+  console.log(`[JOBS] Triggering FastAPI for ${candidateId} | github="${githubProfile}" | text=${safeText.length}chars`);
   axios.post(
     `${RESUME_VERIFIER_URL}/api/v1/resume/analyze`,
-    { candidateId, resumeText, githubProfile: githubProfile || '' },
+    { candidateId, resumeText: safeText, githubProfile: githubProfile || '' },
     { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, timeout: 15000 },
   ).then(r => {
     console.log(`[JOBS] ✅ Dispatched for ${candidateId} — ${r.data?.projectsQueued ?? 0} repos queued`);
@@ -170,6 +185,65 @@ router.get('/company/:userId', verifyAuth, async (req, res) =>
     );
 
     return res.json({jobs: jobsWithApplicants});
+  } catch (err)
+  {
+    return res.status(500).json({message: `Server error: ${err.message}`});
+  }
+});
+
+// Get all applicants for all jobs of a company — single request for the "All Jobs" view
+router.get('/company/:userId/all-applicants', verifyAuth, async (req, res) =>
+{
+  try
+  {
+    const jobs=await Job.find({postedBy: req.params.userId}).select('_id title').lean();
+    if (!jobs.length) return res.json({byJob: {}});
+
+    const jobIds=jobs.map(j => j._id);
+    const applications=await Application.find({job: {$in: jobIds}})
+      .populate('candidate', 'username email skills bio fullName education experience projects')
+      .sort({atsScore: -1})
+      .lean();
+
+    const byJob={};
+    for (const job of jobs)
+    {
+      byJob[job._id]=job.title;
+    }
+
+    const applicants=applications.map(app => ({
+      id: app._id,
+      jobId: app.job,
+      jobTitle: byJob[app.job]||'Unknown Job',
+      status: app.status,
+      round: app.round,
+      score: app.score,
+      atsScore: app.atsScore||0,
+      skillMatchScore: app.skillMatchScore||0,
+      matchedSkills: app.matchedSkills||[],
+      missingSkills: app.missingSkills||[],
+      cgpa: app.cgpa||0,
+      experienceYears: app.experienceYears||0,
+      eligible: app.eligible!==false,
+      eligibilityReasons: app.eligibilityReasons||[],
+      projectDetails: app.projectDetails||[],
+      resumeUrl: app.resumeUrl||'',
+      resumeParsed: app.resumeParsed||null,
+      appliedAt: app.createdAt,
+      shortlistedAt: app.shortlistedAt,
+      candidate: app.candidate? {
+        id: app.candidate._id,
+        name: app.candidate.fullName||app.candidate.username,
+        email: app.candidate.email,
+        skills: app.candidate.skills,
+        bio: app.candidate.bio,
+        education: app.candidate.education,
+        experience: app.candidate.experience,
+        projects: app.candidate.projects,
+      }:null,
+    }));
+
+    return res.json({applicants});
   } catch (err)
   {
     return res.status(500).json({message: `Server error: ${err.message}`});
@@ -303,39 +377,100 @@ router.delete('/:jobId', verifyAuth, async (req, res) =>
    APPLICATION ROUTES (Candidate-side)
    ═══════════════════════════════════════════════════════════════════ */
 
-// Preview: extract GitHub repos from a PDF before submitting application (fast, no DB write)
+// Preview: parse resume + extract GitHub repos before submitting application (fast, no DB write)
+// This is the entry point for the "upload -> immediate parse -> auto GitHub verification" flow.
 router.post('/preview-resume', verifyAuth, resumeUpload.single('resume'), async (req, res) =>
 {
+  const userId = String(req.user?.userId || req.user?.id);
   try
   {
-    let resumeText = '';
-    if (req.file && req.file.mimetype === 'application/pdf') {
-      const pdfData = await pdfParse(req.file.buffer);
-      resumeText = pdfData.text || '';
+    if (!req.file) {
+      return APIResponse.error(res, 'No resume file uploaded', 400);
     }
 
+    let resumeText = '';
+    let textExtractionFailed = false;
+    if (req.file.mimetype === 'application/pdf') {
+      try {
+        resumeText = await extractPdfText(req.file.buffer);
+      } catch (parseErr) {
+        console.warn('[JOBS] PDF text extraction failed:', parseErr.message);
+        textExtractionFailed = true;
+      }
+    }
+    // DOC/DOCX: we don't have a text extractor wired up — rely on GitHub profile fallback below.
+
+    // Run the local resume parser so the frontend gets full structured data immediately
+    const parsed = resumeText.trim() ? parseResume(resumeText) : {success: false, error: 'No extractable text'};
+    const projects = resumeText.trim() ? extractProjects(resumeText) : [];
+
     // Get the candidate's GitHub profile from DB as fallback for hyperlink-only PDFs
-    const candidate = await User.findById(req.user?.userId || req.user?.id).select('github socialLinks').lean();
-    const githubProfile = candidate?.github || candidate?.socialLinks?.github || '';
+    const candidateRecord = await User.findById(req.user?.userId || req.user?.id).select('github socialLinks email name fullName').lean();
+    const dbGithub = candidateRecord?.github || candidateRecord?.socialLinks?.github || '';
+    const githubProfile = parsed?.candidate?.github || dbGithub || '';
+    const linkedinUrl = parsed?.candidate?.linkedin || '';
 
-    // Delegate discovery to FastAPI (it handles both regex + GitHub API fallback)
-    const fastapiRes = await axios.post(
-      `${RESUME_VERIFIER_URL}/api/v1/resume/discover`,
-      { candidateId: String(req.user?.userId || req.user?.id), resumeText: resumeText || 'resume preview scan placeholder text for github discovery', githubProfile },
-      { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, timeout: 10000, validateStatus: null },
-    );
+    // Delegate repo discovery to FastAPI (it handles both regex + GitHub API fallback)
+    let repos = [];
+    let discoveryError = null;
+    try {
+      const fastapiRes = await axios.post(
+        `${RESUME_VERIFIER_URL}/api/v1/resume/discover`,
+        { candidateId: userId, resumeText: resumeText || 'resume preview scan placeholder text for github discovery', githubProfile },
+        { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, timeout: 15000, validateStatus: null },
+      );
+      if (fastapiRes.status >= 200 && fastapiRes.status < 300) {
+        repos = (fastapiRes.data?.projects || []).map(p => ({
+          name: p.name,
+          githubUrl: p.githubUrl,
+          owner: p.githubUrl?.split('/')[3] || '',
+        }));
+      } else if (fastapiRes.status === 429) {
+        discoveryError = 'GitHub API rate limit reached — repository discovery is temporarily limited.';
+      } else {
+        discoveryError = `Repository discovery service returned ${fastapiRes.status}.`;
+      }
+    } catch (discErr) {
+      console.warn('[JOBS] resume/discover unreachable:', discErr.message);
+      discoveryError = 'GitHub verification service is currently unavailable. Your resume was parsed successfully and verification will run automatically once the service is back.';
+    }
 
-    const repos = (fastapiRes.data?.projects || []).map(p => ({
-      name: p.name,
-      githubUrl: p.githubUrl,
-      owner: p.githubUrl?.split('/')[3] || '',
-    }));
+    // Auto-trigger full GitHub verification — no extra user action required
+    let verificationTriggered = false;
+    if (githubProfile || repos.length > 0) {
+      triggerResumeVerification(userId, resumeText || `github: ${githubProfile}`, githubProfile);
+      verificationTriggered = true;
+    }
 
-    return res.json({repos, repoCount: repos.length});
+    return res.json({
+      success: true,
+      candidate: {
+        name: parsed?.candidate?.name || candidateRecord?.fullName || candidateRecord?.name || '',
+        email: parsed?.candidate?.email || candidateRecord?.email || '',
+        phone: parsed?.candidate?.phone || '',
+        github: githubProfile,
+        linkedin: linkedinUrl,
+        portfolio: parsed?.candidate?.portfolio || '',
+      },
+      skills: parsed?.skills || [],
+      projects: projects.map(p => ({
+        name: p.name,
+        description: p.description,
+        technologies: p.technologies || [],
+      })),
+      atsScore: parsed?.atsScore ?? null,
+      resumeParsed: parsed?.success === true,
+      textExtractionFailed,
+      repos,
+      repoCount: repos.length,
+      githubProfile,
+      verificationTriggered,
+      discoveryError,
+    });
   } catch (err)
   {
-    console.warn('[JOBS] preview-resume error:', err.message);
-    return res.json({repos: [], repoCount: 0});
+    console.error('[JOBS] preview-resume error:', err.message);
+    return APIResponse.error(res, 'Failed to parse resume. Please try again.', 500);
   }
 });
 
@@ -344,7 +479,7 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
 {
   try
   {
-    const {candidateId, coverLetter}=req.body;
+    const {candidateId, coverLetter, resumeUrl: bodyResumeUrl, githubProfile: bodyGithubProfile}=req.body;
     const {jobId}=req.params;
 
     if (!candidateId)
@@ -386,8 +521,7 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
         {
           try
           {
-            const pdfData=await pdfParse(req.file.buffer);
-            uploadedResumeText=pdfData.text||'';
+            uploadedResumeText=await extractPdfText(req.file.buffer);
           } catch (pdfErr)
           {
             console.warn('[JOBS] PDF parse warning:', pdfErr.message);
@@ -398,6 +532,10 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
         console.error('[JOBS] Cloudinary upload failed:', cloudErr.message);
         // Continue without resume URL — don't block application
       }
+    } else if (bodyResumeUrl?.trim()) {
+      // No file uploaded — use the pasted resume link directly
+      resumeUrl = bodyResumeUrl.trim();
+      console.log(`[JOBS] Using pasted resume URL: ${resumeUrl}`);
     }
 
     // ── ATS Scoring on Apply ──
@@ -557,8 +695,9 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
 
     // Kick off GitHub repo verification in background (non-blocking)
     const resumeTextForVerification = uploadedResumeText || candidate?.resumeText || '';
-    // Priority: form field > DB profile field (form field handles hyperlink-only PDFs)
-    const candidateGithub = req.body.githubProfile || candidate?.github || candidate?.socialLinks?.github || '';
+    // Priority: form field > pasted resume URL (if GitHub profile) > DB profile field
+    const pastedUrlIsGithub = bodyResumeUrl?.includes('github.com') ? bodyResumeUrl.trim() : '';
+    const candidateGithub = bodyGithubProfile || pastedUrlIsGithub || candidate?.github || candidate?.socialLinks?.github || '';
     const githubRepos = extractGithubUrls(resumeTextForVerification);
     triggerResumeVerification(candidateId, resumeTextForVerification, candidateGithub);
 
@@ -684,6 +823,7 @@ router.get('/:jobId/applicants', verifyAuth, async (req, res) =>
       eligibilityReasons: app.eligibilityReasons||[],
       projectDetails: app.projectDetails||[],
       resumeUrl: app.resumeUrl||'',
+      resumeParsed: app.resumeParsed||null,
       appliedAt: app.createdAt,
       shortlistedAt: app.shortlistedAt,
       candidate: app.candidate? {

@@ -9,13 +9,97 @@ import
   Video, UserCheck, CheckCircle, XCircle, ExternalLink, Trophy, Calendar,
   Phone, PhoneCall, PhoneOff, Mic, Volume2, Filter, Columns3, List,
   Palette, Server, Layers, Wrench, Smartphone, Monitor, MessageSquare, Terminal, Zap,
-  Smile, Minus, Flame, Lightbulb, ClipboardList, GitBranch
+  Smile, Minus, Flame, Lightbulb, ClipboardList, GitBranch, Menu, X, Link2
 } from 'lucide-react';
 import api, {getMyInterviews} from '../services/api';
 import {useFeatures} from '../services/FeatureContext';
 import CodeEditor from '../components/CodeEditor';
 import CodingPractice from './CodingPractice';
 import './CandidateDashboard.css';
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESUME UPLOAD ZONE — drag-drop + file picker + URL link
+   ═══════════════════════════════════════════════════════════════════ */
+function ResumeUploadZone({file, onFile, onRemove, resumeUrl, onUrlChange})
+{
+  const inputRef=useRef(null);
+  const [dragging, setDragging]=useState(false);
+  const [mode, setMode]=useState('file'); // 'file' | 'url'
+
+  const handleDrop=useCallback((e) =>
+  {
+    e.preventDefault();
+    setDragging(false);
+    const f=e.dataTransfer.files[0];
+    if (f) { setMode('file'); onFile(f); }
+  }, [onFile]);
+
+  const handleDragOver=useCallback((e) => { e.preventDefault(); setDragging(true); }, []);
+  const handleDragLeave=useCallback((e) =>
+  {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
+  }, []);
+
+  if (file)
+  {
+    return (
+      <div className="ats-file-uploaded">
+        <FileText size={20} color="#22c55e" />
+        <div className="ats-file-info-row">
+          <span className="ats-file-name">{file.name}</span>
+          <span className="ats-file-size">{(file.size/1024).toFixed(0)} KB · {file.type.split('/').pop().toUpperCase()}</span>
+        </div>
+        <button type="button" className="ats-file-remove-btn" onClick={onRemove}><X size={14}/></button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Mode toggle */}
+      <div className="ats-upload-mode-tabs">
+        <button type="button" className={`ats-mode-tab ${mode==='file'?'active':''}`} onClick={() => setMode('file')}>
+          <Upload size={13}/> Upload File
+        </button>
+        <button type="button" className={`ats-mode-tab ${mode==='url'?'active':''}`} onClick={() => setMode('url')}>
+          <Link2 size={13}/> Paste Link
+        </button>
+      </div>
+
+      {mode==='file'? (
+        <div
+          className={`ats-resume-upload-area ${dragging?'dragging':''}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => inputRef.current?.click()}
+          style={{cursor: 'pointer'}}
+        >
+          <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" style={{display:'none'}}
+            onChange={(e) => { if (e.target.files[0]) onFile(e.target.files[0]); }} />
+          <Upload size={32} className={dragging?'ats-upload-icon-bounce':''} />
+          <h4>{dragging?'Drop it here!':'Upload Your Resume'}</h4>
+          <p>{dragging?'Release to upload':'Drag & drop or click to browse'}</p>
+          <span className="ats-upload-hint">PDF, DOC or DOCX · Max 10 MB</span>
+        </div>
+      ):(
+        <div className="ats-url-input-area">
+          <Link2 size={18} className="ats-url-icon"/>
+          <input
+            className="ats-url-link-input"
+            type="url"
+            placeholder="https://drive.google.com/… or any public resume URL"
+            value={resumeUrl}
+            onChange={(e) => onUrlChange(e.target.value)}
+          />
+          {resumeUrl&&(
+            <button type="button" className="ats-file-remove-btn" onClick={() => onUrlChange('')}><X size={14}/></button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    TAB DEFINITIONS
@@ -41,6 +125,7 @@ function CandidateDashboard()
   const [activeTab, setActiveTab]=useState('dashboard');
   const [searchQuery, setSearchQuery]=useState('');
   const {features}=useFeatures();
+  const [mobileMenuOpen, setMobileMenuOpen]=useState(false);
 
   // Filter tabs based on feature toggles (tabs without featureId are always shown)
   const visibleTabs=TABS.filter(t => !t.featureId||features[t.featureId]!==false);
@@ -77,9 +162,19 @@ function CandidateDashboard()
 
   return (
     <div className="cd-page">
+      {/* Mobile overlay */}
+      {mobileMenuOpen&&<div className="cd-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
       {/* ═══ Left Sidebar ═══ */}
-      <aside className="cd-sidebar">
-        <Link to="/candidate-dashboard" className="cd-logo">EDU-AI</Link>
+      <aside className={`cd-sidebar ${mobileMenuOpen? 'cd-sidebar-open':''}`}>
+        <div className="cd-sidebar-top">
+          <Link to="/candidate-dashboard" className="cd-logo">
+            <span className="cd-logo-accent">EDU</span>-AI
+          </Link>
+          <button className="cd-sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        </div>
 
         <div className="cd-sidebar-nav">
           {visibleTabs.map((t) => (
@@ -88,7 +183,9 @@ function CandidateDashboard()
               className={`cd-nav-tab ${activeTab===t.key? 'active':''}`}
               onClick={() =>
               {
+                setMobileMenuOpen(false);
                 if (t.key==='profile') return navigate('/candidate-profile');
+                if (t.key==='ai-interview') return window.location.assign('https://ai-avatar.up.railway.app/');
                 setActiveTab(t.key);
               }}
             >
@@ -114,6 +211,9 @@ function CandidateDashboard()
       <div className="cd-main-wrapper">
         {/* Top Bar */}
         <header className="cd-topbar">
+          <button className="cd-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation">
+            <Menu size={20} />
+          </button>
           <div className="cd-search-box">
             <Search size={16} />
             <input
@@ -159,6 +259,7 @@ function DashboardTab({user, initials, setActiveTab})
   const [loadingJobs, setLoadingJobs]=useState(true);
   const [applyModal, setApplyModal]=useState(null);   // {jobId, jobTitle} when open
   const [resumeFile, setResumeFile]=useState(null);
+  const [resumeUrl, setResumeUrl]=useState('');
   const [githubUrl, setGithubUrl]=useState('');
   const [atsResult, setAtsResult]=useState(null);      // ATS result after apply
   const [applyLoading, setApplyLoading]=useState(false);
@@ -196,6 +297,8 @@ function DashboardTab({user, initials, setActiveTab})
     const job=jobs.find(j => j.id===jobId);
     setApplyModal({jobId, jobTitle: job?.title||'Job'});
     setResumeFile(null);
+    setResumeUrl('');
+    setGithubUrl(user.github || '');
     setAtsResult(null);
     setDiscoveredRepos([]);
     setScanLoading(false);
@@ -204,6 +307,7 @@ function DashboardTab({user, initials, setActiveTab})
   const handleResumeFileChange=async (file) =>
   {
     setResumeFile(file||null);
+    setResumeUrl('');
     setDiscoveredRepos([]);
     if (!file||file.type!=='application/pdf') return;
     setScanLoading(true);
@@ -226,6 +330,7 @@ function DashboardTab({user, initials, setActiveTab})
       const formData=new FormData();
       formData.append('candidateId', user.id);
       if (resumeFile) formData.append('resume', resumeFile);
+      if (resumeUrl.trim()) formData.append('resumeUrl', resumeUrl.trim());
       if (githubUrl.trim()) formData.append('githubProfile', githubUrl.trim());
 
       const res=await api.post(`/jobs/${applyModal.jobId}/apply`, formData, {
@@ -396,7 +501,7 @@ function DashboardTab({user, initials, setActiveTab})
           </div>
           <div className="cd-actions-grid">
             {visibleQuickActions.map((action) => (
-              <div className="cd-action-card" key={action.label} onClick={() => action.link? navigate(action.link):setActiveTab(action.tab)}>
+              <div className="cd-action-card" key={action.label} onClick={() => action.tab==='ai-interview'? window.location.assign('https://ai-avatar.up.railway.app/'):(action.link? navigate(action.link):setActiveTab(action.tab))}>
                 <div className="cd-action-top">
                   <div className="cd-action-icon">{action.icon}</div>
                   <span className="cd-action-badge">{action.badge}</span>
@@ -435,17 +540,13 @@ function DashboardTab({user, initials, setActiveTab})
                   <button className="ats-apply-close" onClick={() => {setApplyModal(null); setResumeFile(null);}}>✕</button>
                 </div>
                 <div className="ats-apply-body">
-                  <div className="ats-resume-upload-area">
-                    <Upload size={36} />
-                    <h4>Upload Your Resume</h4>
-                    <p>Upload a PDF resume for better ATS scoring</p>
-                    <input type="file" accept=".pdf,.doc,.docx" id="dash-resume-upload" style={{display: 'none'}}
-                      onChange={(e) => handleResumeFileChange(e.target.files[0]||null)} />
-                    <label htmlFor="dash-resume-upload" className="ats-upload-btn">
-                      <FileText size={16} /> {resumeFile? resumeFile.name:'Choose File'}
-                    </label>
-                    {resumeFile&&<span className="ats-file-info">{(resumeFile.size/1024).toFixed(0)} KB · {resumeFile.type.split('/').pop().toUpperCase()}</span>}
-                  </div>
+                  <ResumeUploadZone
+                    file={resumeFile}
+                    onFile={handleResumeFileChange}
+                    onRemove={() => { setResumeFile(null); setDiscoveredRepos([]); }}
+                    resumeUrl={resumeUrl}
+                    onUrlChange={setResumeUrl}
+                  />
                   {scanLoading&&(
                     <div className="ats-github-scanning">
                       <span className="ats-scan-pulse"/><span>Scanning for GitHub repositories…</span>
@@ -583,6 +684,7 @@ function JobsTab({user})
   const [applyingId, setApplyingId]=useState(null);
   const [applyModal, setApplyModal]=useState(null);
   const [resumeFile, setResumeFile]=useState(null);
+  const [resumeUrl, setResumeUrl]=useState('');
   const [githubUrl, setGithubUrl]=useState('');
   const [atsResult, setAtsResult]=useState(null);
   const [applyLoading, setApplyLoading]=useState(false);
@@ -630,6 +732,8 @@ function JobsTab({user})
     const job=jobs.find(j => j.id===jobId);
     setApplyModal({jobId, jobTitle: job?.title||'Job'});
     setResumeFile(null);
+    setResumeUrl('');
+    setGithubUrl(user.github || '');
     setAtsResult(null);
     setDiscoveredRepos([]);
     setScanLoading(false);
@@ -638,6 +742,7 @@ function JobsTab({user})
   const handleResumeFileChange=async (file) =>
   {
     setResumeFile(file||null);
+    setResumeUrl('');
     setDiscoveredRepos([]);
     if (!file||file.type!=='application/pdf') return;
     setScanLoading(true);
@@ -661,6 +766,7 @@ function JobsTab({user})
       const formData=new FormData();
       formData.append('candidateId', user.id);
       if (resumeFile) formData.append('resume', resumeFile);
+      if (resumeUrl.trim()) formData.append('resumeUrl', resumeUrl.trim());
       if (githubUrl.trim()) formData.append('githubProfile', githubUrl.trim());
 
       const res=await api.post(`/jobs/${applyModal.jobId}/apply`, formData, {
@@ -699,7 +805,7 @@ function JobsTab({user})
 
   const getStatusColor=(status) =>
   {
-    const colors={applied: '#3b82f6', shortlisted: '#f59e0b', selected: '#22c55e', rejected: '#ef4444'};
+    const colors={applied: '#FF6B35', shortlisted: '#f59e0b', selected: '#22c55e', rejected: '#ef4444'};
     return colors[status]||'#6b7280';
   };
 
@@ -712,7 +818,7 @@ function JobsTab({user})
 
       {/* Stats Strip */}
       <div className="jt-stats-strip">
-        <div className="jt-stat" style={{borderColor: '#3b82f6'}}>
+        <div className="jt-stat" style={{borderColor: '#FF6B35'}}>
           <span className="jt-stat-num">{counts.applied||0}</span>
           <span className="jt-stat-label">Applied</span>
         </div>
@@ -843,7 +949,7 @@ function JobsTab({user})
         /* ── Kanban View ── */
         <div className="jt-kanban-board">
           {[
-            {key: 'applied', label: 'Applied', color: '#3b82f6', icon: <FileText size={16} />},
+            {key: 'applied', label: 'Applied', color: '#FF6B35', icon: <FileText size={16} />},
             {key: 'shortlisted', label: 'Shortlisted', color: '#f59e0b', icon: <Star size={16} />},
             {key: 'selected', label: 'Selected', color: '#22c55e', icon: <CheckCircle size={16} />},
             {key: 'rejected', label: 'Rejected', color: '#ef4444', icon: <XCircle size={16} />},
@@ -903,17 +1009,13 @@ function JobsTab({user})
                   <button className="ats-apply-close" onClick={() => {setApplyModal(null); setResumeFile(null);}}>✕</button>
                 </div>
                 <div className="ats-apply-body">
-                  <div className="ats-resume-upload-area">
-                    <Upload size={36} />
-                    <h4>Upload Your Resume</h4>
-                    <p>Upload a PDF resume for better ATS scoring</p>
-                    <input type="file" accept=".pdf,.doc,.docx" id="jobs-resume-upload" style={{display: 'none'}}
-                      onChange={(e) => handleResumeFileChange(e.target.files[0]||null)} />
-                    <label htmlFor="jobs-resume-upload" className="ats-upload-btn">
-                      <FileText size={16} /> {resumeFile? resumeFile.name:'Choose File'}
-                    </label>
-                    {resumeFile&&<span className="ats-file-info">{(resumeFile.size/1024).toFixed(0)} KB · {resumeFile.type.split('/').pop().toUpperCase()}</span>}
-                  </div>
+                  <ResumeUploadZone
+                    file={resumeFile}
+                    onFile={handleResumeFileChange}
+                    onRemove={() => { setResumeFile(null); setDiscoveredRepos([]); }}
+                    resumeUrl={resumeUrl}
+                    onUrlChange={setResumeUrl}
+                  />
                   {scanLoading&&(
                     <div className="ats-github-scanning">
                       <span className="ats-scan-pulse"/><span>Scanning for GitHub repositories…</span>
@@ -1347,7 +1449,7 @@ function AICallingTab({user})
                 {transcript.map((msg, i) => (
                   <div key={i} className={`aic-msg ${msg.speaker}`}>
                     <div className="aic-msg-avatar">
-                      {msg.speaker==='agent'? '🤖':msg.speaker==='user'? '👤':'📞'}
+                      {msg.speaker==='agent'? 'AI':msg.speaker==='user'? 'You':'Sys'}
                     </div>
                     <div className="aic-msg-content">
                       <div className="aic-msg-speaker">
@@ -1442,7 +1544,7 @@ function RecruiterInterviewTab({user})
             </div>
           ):scheduledInterviews.length>0&&(
             <div className="cdt-section" style={{marginBottom: '1.5rem'}}>
-              <h2>📅 Scheduled Interviews ({scheduledInterviews.length})</h2>
+              <h2>Scheduled Interviews ({scheduledInterviews.length})</h2>
               <div className="cdt-ri-scheduled-grid">
                 {scheduledInterviews.map(iv => (
                   <div className="cdt-ri-scheduled-card" key={iv.sessionId}>
@@ -1464,7 +1566,7 @@ function RecruiterInterviewTab({user})
                       onClick={() => navigate(`/interview/${iv.sessionId}?mode=candidate&name=${encodeURIComponent(user.username)}&role=candidate`)}
                       disabled={iv.status==='completed'}
                     >
-                      {iv.status==='completed'? '✅ Completed':iv.status==='active'? '🔴 Join Now':'🚀 Join Interview'}
+                      {iv.status==='completed'? 'Completed':iv.status==='active'? 'Join Now':'Join Interview'}
                     </button>
                   </div>
                 ))}
@@ -1496,7 +1598,7 @@ function RecruiterInterviewTab({user})
                   className="cdt-ri-input"
                 />
                 <button className="cdt-ri-join-btn" onClick={handleJoinInterview} disabled={joinLoading}>
-                  {joinLoading? 'Joining...':'🚀 Join Interview'}
+                  {joinLoading? 'Joining...':'Join Interview'}
                 </button>
               </div>
             </>
@@ -1663,7 +1765,7 @@ function PracticeTab({user})
           <div><strong>Mode</strong><span>{modes.find(m => m.id===config.mode)?.name}</span></div>
           <div><strong>Duration</strong><span>~{config.duration} min</span></div>
         </div>
-        <button className="cdt-start-btn" onClick={handleStart} disabled={!config.role}>🚀 Start Practice Interview</button>
+        <button className="cdt-start-btn" onClick={handleStart} disabled={!config.role}>Start Practice Interview</button>
       </div>
     </div>
   );
@@ -1749,7 +1851,7 @@ function AIInterviewTab({user})
             </select>
           </div>
           <button type="submit" className="cdt-start-btn" disabled={loading}>
-            {loading? 'Starting...':'🎯 Start AI Interview'}
+            {loading? 'Starting...':'Start AI Interview'}
           </button>
         </form>
       </div>
@@ -1821,7 +1923,7 @@ function AxiomTab({user})
       <div className="cdt-chat-messages">
         {messages.length===0? (
           <div className="cdt-chat-welcome">
-            <h3>👋 Welcome to Spec AI{user? `, ${user.username}`:''}!</h3>
+            <h3>Welcome to Spec AI{user? `, ${user.username}`:''}!</h3>
             <p>I'm your personalized AI assistant. I know your profile and can help with career guidance, interview prep, and coding.</p>
             <div className="cdt-suggestions">
               <h4>Try asking me:</h4>
@@ -1932,7 +2034,7 @@ function LiveContestTab({user})
           <div className="lq-section-header">
             <h2>Available Contests</h2>
             <button onClick={fetchContests} className="lq-refresh-btn">
-              {loading? 'Loading...':'🔄 Refresh'}
+              {loading? 'Loading...':'Refresh'}
             </button>
           </div>
 
@@ -1958,12 +2060,12 @@ function LiveContestTab({user})
                   <p className="lq-card-topic">{c.topic}</p>
                   <div className="lq-card-meta">
                     <span>● {c.difficulty}</span>
-                    <span>💻 {c.challengeCount} challenges</span>
-                    <span>👥 {c.participantCount} joined</span>
+                    <span>{c.challengeCount} challenges</span>
+                    <span>{c.participantCount} joined</span>
                     <span>⏱ {c.duration} min</span>
                   </div>
                   <button onClick={() => handleJoinContest(c.code)} className="lq-play-btn">
-                    {c.status==='active'? '🔴 Join Live Contest':'💻 Join Contest'}
+                    {c.status==='active'? 'Join Live Contest':'Join Contest'}
                   </button>
                 </div>
               ))}
@@ -2015,7 +2117,7 @@ function LiveQuizTab({user})
     navigate(`/quiz/play?code=${code}&name=${encodeURIComponent(name)}`);
   };
 
-  const statusLabel={waiting: 'Open to Join', active: 'Live Now', question_open: '🔴 Live — Question Open', question_closed: 'Live — Between Questions'};
+  const statusLabel={waiting: 'Open to Join', active: 'Live Now', question_open: 'Live — Question Open', question_closed: 'Live — Between Questions'};
 
   return (
     <div className="cd-container cd-tab-content">
@@ -2050,7 +2152,7 @@ function LiveQuizTab({user})
           <div className="lq-section-header">
             <h2>Available Quizzes</h2>
             <button onClick={fetchQuizzes} className="lq-refresh-btn">
-              {loading? 'Loading...':'🔄 Refresh'}
+              {loading? 'Loading...':'Refresh'}
             </button>
           </div>
 
@@ -2076,12 +2178,12 @@ function LiveQuizTab({user})
                   <p className="lq-card-topic">{q.topic}</p>
                   <div className="lq-card-meta">
                     <span>● {q.difficulty}</span>
-                    <span>📝 {q.questionCount} Q</span>
-                    <span>👥 {q.participantCount} joined</span>
-                    <span>🎙 {q.hostName}</span>
+                    <span>{q.questionCount} Q</span>
+                    <span>{q.participantCount} joined</span>
+                    <span>{q.hostName}</span>
                   </div>
                   <button onClick={() => handleJoinQuiz(q.code)} className="lq-play-btn">
-                    {['active', 'question_open', 'question_closed'].includes(q.status)? '🔴 Join Live Quiz':'🎮 Join Quiz'}
+                    {['active', 'question_open', 'question_closed'].includes(q.status)? 'Join Live Quiz':'Join Quiz'}
                   </button>
                 </div>
               ))}

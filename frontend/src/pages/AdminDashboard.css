@@ -97,7 +97,7 @@
   align-items: flex-start;
   gap: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.45), rgba(10, 10, 10, 0.8));
+  background: linear-gradient(135deg, rgba(122, 46, 16, 0.18), rgba(10, 10, 10, 0.8));
   border-radius: 14px;
   padding: 0.9rem 1rem;
 }
@@ -163,11 +163,11 @@
   height: 9px;
   border-radius: 999px;
   margin-right: 0.35rem;
-  background: #60a5fa;
+  background: #FF8C42;
 }
 
-.adm-dot.purple { background: #c084fc; }
-.adm-dot.blue { background: #60a5fa; }
+.adm-dot.purple { background: #FFCC99; }
+.adm-dot.blue { background: #FF8C42; }
 
 .adm-line-chart {
   margin-top: 0.5rem;
@@ -271,11 +271,11 @@
 .adm-health-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  background: linear-gradient(90deg, #FF6B35, #FF8C42);
 }
 
 .adm-health-fill.purple {
-  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  background: linear-gradient(90deg, #FF6B35, #FFB366);
 }
 
 .adm-health-fill.green {
@@ -307,9 +307,9 @@
 }
 
 .adm-chip-filter.active {
-  border-color: rgba(96, 165, 250, 0.6);
-  background: rgba(59, 130, 246, 0.2);
-  color: #dbeafe;
+  border-color: rgba(255, 140, 66, 0.6);
+  background: rgba(255, 107, 53, 0.2);
+  color: #FFE0CC;
 }
 
 .adm-job-grid {
@@ -330,12 +330,12 @@
 
 .adm-job-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(96, 165, 250, 0.35);
+  border-color: rgba(255, 140, 66, 0.35);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
 }
 
 .adm-job-card.editing {
-  border-color: rgba(96, 165, 250, 0.52);
+  border-color: rgba(255, 140, 66, 0.52);
 }
 
 .adm-job-head {
@@ -383,7 +383,7 @@
 }
 
 .adm-job-kpi-badge svg {
-  color: #93c5fd;
+  color: #FFB366;
 }
 
 .adm-job-kpi-badge span {
@@ -452,8 +452,8 @@
 }
 
 .adm-job-quick-btn:hover {
-  border-color: rgba(96, 165, 250, 0.45);
-  color: #dbeafe;
+  border-color: rgba(255, 140, 66, 0.45);
+  color: #FFE0CC;
 }
 
 .adm-job-quick-btn:disabled {
@@ -467,8 +467,8 @@
 }
 
 .adm-job-edit-grid {
-  border: 1px solid rgba(96, 165, 250, 0.26);
-  background: rgba(30, 58, 138, 0.12);
+  border: 1px solid rgba(255, 140, 66, 0.26);
+  background: rgba(122, 46, 16, 0.12);
   border-radius: 12px;
   padding: 0.65rem;
   display: grid;
@@ -479,7 +479,7 @@
 .adm-job-edit-grid label {
   display: grid;
   gap: 0.3rem;
-  color: #dbeafe;
+  color: #FFE0CC;
   font-size: 0.8rem;
 }
 
@@ -539,9 +539,9 @@
 }
 
 .adm-company-container.active {
-  border-color: rgba(96, 165, 250, 0.65);
-  background: linear-gradient(180deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.9));
-  color: #dbeafe;
+  border-color: rgba(255, 140, 66, 0.65);
+  background: linear-gradient(180deg, rgba(122, 46, 16, 0.35), rgba(26, 17, 13, 0.9));
+  color: #FFE0CC;
 }
 
 .adm-growth-row {
@@ -610,7 +610,7 @@
 }
 
 .adm-insight-fill.gradient {
-  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  background: linear-gradient(90deg, #FF6B35, #FFB366);
 }
 
 .adm-filter-row {
@@ -705,7 +705,7 @@
 .adm-link-btn {
   border: none;
   background: transparent;
-  color: #93c5fd;
+  color: #FFB366;
   cursor: pointer;
 }
 
@@ -737,7 +737,7 @@
 .adm-trend-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  background: linear-gradient(90deg, #FF6B35, #FFB366);
 }
 
 .adm-signal-list {
@@ -765,7 +765,7 @@
 }
 
 .adm-signal-btn.active {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(255, 107, 53, 0.12);
   border-radius: 8px;
   padding: 0.42rem 0.5rem;
 }
@@ -819,14 +819,14 @@
 }
 
 .adm-user-mode-card:hover {
-  border-color: rgba(59, 130, 246, 0.55);
-  background: #131722;
+  border-color: rgba(255, 107, 53, 0.55);
+  background: #1A140F;
   transform: translateY(-1px);
 }
 
 .adm-user-mode-card.active {
-  border-color: rgba(59, 130, 246, 0.7);
-  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(255, 107, 53, 0.7);
+  background: rgba(255, 107, 53, 0.14);
 }
 
 .adm-skill-bubbles-wrap {
@@ -862,14 +862,14 @@
 }
 
 .adm-skill-bubble:hover {
-  border-color: rgba(59, 130, 246, 0.5);
-  background: #1a1a2e;
+  border-color: rgba(255, 107, 53, 0.5);
+  background: #1F1611;
 }
 
 .adm-skill-bubble.active {
-  border-color: rgba(59, 130, 246, 0.7);
-  background: rgba(59, 130, 246, 0.18);
-  color: #93c5fd;
+  border-color: rgba(255, 107, 53, 0.7);
+  background: rgba(255, 107, 53, 0.18);
+  color: #FFB366;
 }
 
 .adm-skill-bubble-count {
@@ -881,8 +881,8 @@
 }
 
 .adm-skill-bubble.active .adm-skill-bubble-count {
-  background: rgba(59, 130, 246, 0.25);
-  color: #93c5fd;
+  background: rgba(255, 107, 53, 0.25);
+  color: #FFB366;
 }
 
 .adm-skill-clear-btn {
@@ -1512,7 +1512,7 @@
 
 .adm-announce-field input:focus,
 .adm-announce-field textarea:focus {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(255, 107, 53, 0.5);
 }
 
 .adm-announce-field textarea {
@@ -1552,9 +1552,9 @@
 }
 
 .adm-announce-chip.active {
-  border-color: rgba(59, 130, 246, 0.55);
-  background: rgba(59, 130, 246, 0.1);
-  color: #93c5fd;
+  border-color: rgba(255, 107, 53, 0.55);
+  background: rgba(255, 107, 53, 0.1);
+  color: #FFB366;
 }
 
 /* ─── Announcement Cards List ─── */
@@ -1586,7 +1586,7 @@
 }
 
 .adm-announce-card-normal {
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #FF6B35;
 }
 
 .adm-announce-card-head {
@@ -1610,7 +1610,7 @@
   flex-shrink: 0;
 }
 
-.adm-announce-prio-normal { background: #3b82f6; }
+.adm-announce-prio-normal { background: #FF6B35; }
 .adm-announce-prio-important { background: #f59e0b; }
 .adm-announce-prio-urgent { background: #ef4444; }
 

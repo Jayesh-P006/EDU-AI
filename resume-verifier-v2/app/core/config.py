@@ -28,9 +28,7 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://localhost:6379/1"
 
     # Hugging Face
-    huggingface_api_key: str = ""
-    huggingface_model: str = "meta-llama/Llama-3.2-11B-Vision-Instruct"
-    huggingface_pro_model: str = "meta-llama/Llama-3.3-70B-Instruct"
+    huggingface_custom_model: str = "dhruvchourey/eduai"
 
     # Groq (fallback LLM)
     groq_api_key: str = ""
@@ -57,6 +55,9 @@ class Settings(BaseSettings):
     # LLM Retry
     llm_max_retries: int = 3
     llm_retry_delay: int = 2
+    huggingface_api_key: str = ""
+    huggingface_model: str = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+    huggingface_pro_model: str = "meta-llama/Llama-3.3-70B-Instruct"
 
     @property
     def max_repo_size_bytes(self) -> int:

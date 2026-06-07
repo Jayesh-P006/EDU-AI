@@ -589,9 +589,9 @@ function AdminDashboard()
   const scorePath=buildLinePath(averageScoreSeries, maxAverageScore);
 
   const fraudSignalEntries=[
-    {key: 'tab_switch', label: 'Tab Switch', value: analyticsTrends.fraud_signals.tab_switch||0, color: '#3b82f6'},
+    {key: 'tab_switch', label: 'Tab Switch', value: analyticsTrends.fraud_signals.tab_switch||0, color: '#FF6B35'},
     {key: 'multiple_faces', label: 'Multi Face', value: analyticsTrends.fraud_signals.multiple_faces||0, color: '#ef4444'},
-    {key: 'copy_paste', label: 'Copy/Paste', value: analyticsTrends.fraud_signals.copy_paste||0, color: '#a855f7'},
+    {key: 'copy_paste', label: 'Copy/Paste', value: analyticsTrends.fraud_signals.copy_paste||0, color: '#FFB366'},
     {key: 'suspicious_activity', label: 'AI Pattern', value: analyticsTrends.fraud_signals.suspicious_activity||0, color: '#f59e0b'},
   ];
 
@@ -762,8 +762,8 @@ function AdminDashboard()
 
     const base=Math.max(1, totals.totalJobs);
     return [
-      {id: 'jobs', label: 'Open Pipeline', value: totals.activeJobs, color: '#60a5fa'},
-      {id: 'interview', label: 'In Interview', value: totals.inInterview, color: '#a78bfa'},
+      {id: 'jobs', label: 'Open Pipeline', value: totals.activeJobs, color: '#FF6B35'},
+      {id: 'interview', label: 'In Interview', value: totals.inInterview, color: '#FFB366'},
       {id: 'offer', label: 'Offers', value: totals.offered, color: '#f59e0b'},
       {id: 'hired', label: 'Hired', value: totals.hired, color: '#22c55e'},
     ].map((row) => ({
@@ -1427,12 +1427,12 @@ function AdminDashboard()
                       <svg viewBox="0 0 560 180" className="adm-line-chart" role="img" aria-label="Assessments and average score trend">
                         <defs>
                           <linearGradient id="admAssessGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#3b82f6" />
-                            <stop offset="100%" stopColor="#60a5fa" />
+                            <stop offset="0%" stopColor="#FF6B35" />
+                            <stop offset="100%" stopColor="#FF8C42" />
                           </linearGradient>
                           <linearGradient id="admScoreGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#a855f7" />
-                            <stop offset="100%" stopColor="#c084fc" />
+                            <stop offset="0%" stopColor="#FFB366" />
+                            <stop offset="100%" stopColor="#FFCC99" />
                           </linearGradient>
                         </defs>
                         {[0, 1, 2, 3].map((step) => (
@@ -1863,9 +1863,9 @@ function AdminDashboard()
                     <h3>Skill Benchmarks</h3>
                     <div className="adm-radial-grid">
                       {[
-                        {key: 'technical', label: 'Technical', color: '#3b82f6'},
-                        {key: 'problemSolving', label: 'Problem\nSolving', color: '#a855f7'},
-                        {key: 'communication', label: 'Communication', color: '#22d3ee'},
+                        {key: 'technical', label: 'Technical', color: '#FF6B35'},
+                        {key: 'problemSolving', label: 'Problem\nSolving', color: '#FFB366'},
+                        {key: 'communication', label: 'Communication', color: '#FFCC99'},
                         {key: 'domain', label: 'Domain', color: '#f59e0b'},
                         {key: 'aptitude', label: 'Aptitude', color: '#22c55e'},
                       ].map((skill) => {
@@ -1895,7 +1895,7 @@ function AdminDashboard()
                       const buckets = [
                         {key: 'below40', label: '< 40', color: '#ef4444', count: candidateOversight.performanceDistribution?.below40?.count||0},
                         {key: 'between40And59', label: '40–59', color: '#f59e0b', count: candidateOversight.performanceDistribution?.between40And59?.count||0},
-                        {key: 'between60And79', label: '60–79', color: '#3b82f6', count: candidateOversight.performanceDistribution?.between60And79?.count||0},
+                        {key: 'between60And79', label: '60–79', color: '#FF6B35', count: candidateOversight.performanceDistribution?.between60And79?.count||0},
                         {key: 'atLeast80', label: '80+', color: '#22c55e', count: candidateOversight.performanceDistribution?.atLeast80?.count||0},
                       ];
                       const total = Math.max(1, buckets.reduce((s, b) => s + b.count, 0));
@@ -1947,12 +1947,12 @@ function AdminDashboard()
                           <svg className="adm-area-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
                             <defs>
                               <linearGradient id="integrityGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#a855f7" stopOpacity="0.5" />
-                                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.02" />
+                                <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.5" />
+                                <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.02" />
                               </linearGradient>
                               <linearGradient id="integrityStroke" x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor="#3b82f6" />
-                                <stop offset="100%" stopColor="#a855f7" />
+                                <stop offset="0%" stopColor="#FF6B35" />
+                                <stop offset="100%" stopColor="#FFB366" />
                               </linearGradient>
                             </defs>
                             {[0, 0.25, 0.5, 0.75, 1].map((frac) => (
@@ -1961,7 +1961,7 @@ function AdminDashboard()
                             <path className="area-fill" d={areaPath} fill="url(#integrityGrad)" />
                             <path className="area-line" d={linePath} stroke="url(#integrityStroke)" />
                             {pts.map((p, i) => (
-                              <circle key={i} className="area-dot" cx={p.x} cy={p.y} r="4" stroke="#a855f7" />
+                              <circle key={i} className="area-dot" cx={p.x} cy={p.y} r="4" stroke="#FF8C42" />
                             ))}
                           </svg>
                           <div className="adm-area-labels">
@@ -2404,7 +2404,7 @@ function AdminDashboard()
                       <div className="adm-announce-field">
                         <label>Priority</label>
                         <div className="adm-announce-chips">
-                          {[{id: 'normal', label: 'Normal', color: '#3b82f6'}, {id: 'important', label: 'Important', color: '#f59e0b'}, {id: 'urgent', label: 'Urgent', color: '#ef4444'}].map((opt) => (
+                          {[{id: 'normal', label: 'Normal', color: '#FF6B35'}, {id: 'important', label: 'Important', color: '#f59e0b'}, {id: 'urgent', label: 'Urgent', color: '#ef4444'}].map((opt) => (
                             <button
                               key={opt.id}
                               className={`adm-announce-chip ${announcementForm.priority===opt.id? 'active':''}`}
@@ -2475,7 +2475,7 @@ function AdminDashboard()
                 <>
                   <div style={{display:'flex',gap:'12px',marginBottom:'1.5rem',flexWrap:'wrap'}}>
                     <button className="adm-btn adm-btn-primary" onClick={handleSaveFeatureConfig} disabled={featureConfigSaving}
-                      style={{display:'flex',alignItems:'center',gap:'6px',padding:'10px 20px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:600}}>
+                      style={{display:'flex',alignItems:'center',gap:'6px',padding:'10px 20px',background:'#FF6B35',color:'#fff',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:600}}>
                       <CheckCircle size={16} /> {featureConfigSaving?'Saving...':'Save All Changes'}
                     </button>
                     <button onClick={()=>handleResetRole('company')}
@@ -2841,14 +2841,14 @@ function FeatureToggleCard({feature, role, config, onToggle})
       style={{
         display:'flex', alignItems:'center', gap:'14px',
         padding:'14px 18px', borderRadius:'12px', cursor:'pointer',
-        background:isEnabled?'rgba(99,102,241,0.06)':'rgba(239,68,68,0.04)',
-        border:`1px solid ${isEnabled?'rgba(99,102,241,0.2)':'rgba(239,68,68,0.15)'}`,
+        background:isEnabled?'rgba(255,107,53,0.06)':'rgba(239,68,68,0.04)',
+        border:`1px solid ${isEnabled?'rgba(255,107,53,0.2)':'rgba(239,68,68,0.15)'}`,
         transition:'all 0.2s',
       }}
     >
       <div style={{
         width:'44px', height:'26px', borderRadius:'13px', position:'relative',
-        background:isEnabled?'#6366f1':'#334155', transition:'background 0.25s', flexShrink:0,
+        background:isEnabled?'#FF6B35':'#334155', transition:'background 0.25s', flexShrink:0,
       }}>
         <div style={{
           width:'20px', height:'20px', borderRadius:'50%', background:'#fff',

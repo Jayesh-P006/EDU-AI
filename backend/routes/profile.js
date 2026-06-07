@@ -8,6 +8,45 @@ import resumeParser from '../services/resumeParser.js';
 import {verifyAuth} from '../middleware/auth.js';
 import {APIResponse} from '../middleware/response.js';
 
+// ── Extract text + annotation links from a PDF buffer ───────────────
+async function extractPdfContent(buffer)
+{
+  // 1. Extract visible text via pdf-parse
+  const parser=new PDFParse({data: new Uint8Array(buffer)});
+  const pdfData=await parser.getText();
+  const text=pdfData.text||'';
+  await parser.destroy();
+
+  // 2. Extract clickable annotation URLs via pdfjs-dist
+  // (hyperlinks are stored as PDF annotations, NOT visible text)
+  let annotationUrls=[];
+  try
+  {
+    const pdfjsLib=await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const pdf=await pdfjsLib.getDocument({data: new Uint8Array(buffer), verbosity: 0}).promise;
+    for (let i=1;i<=pdf.numPages;i++)
+    {
+      const page=await pdf.getPage(i);
+      const anns=await page.getAnnotations();
+      for (const ann of anns)
+      {
+        const url=ann.url||ann.action?.url;
+        if (url&&!url.startsWith('mailto:')) annotationUrls.push(url);
+      }
+    }
+  } catch (annErr)
+  {
+    console.log('[PROFILE] Annotation link extraction skipped:', annErr.message);
+  }
+
+  // Append annotation URLs to text so the regex parser can find them
+  const combined=annotationUrls.length>0
+    ? `${text}\n${annotationUrls.join('\n')}`
+    : text;
+
+  return {text: combined, annotationUrls};
+}
+
 const router=express.Router();
 
 // Apply auth to all profile routes
@@ -172,10 +211,8 @@ router.post('/:userId/resume/file', upload.single('resume'), async (req, res) =>
     {
       try
       {
-        const parser=new PDFParse({data: new Uint8Array(file.buffer)});
-        const pdfData=await parser.getText();
-        resumeText=pdfData.text||'';
-        await parser.destroy();
+        const {text}=await extractPdfContent(file.buffer);
+        resumeText=text;
       } catch (pdfErr)
       {
         console.error('PDF parse error:', pdfErr);

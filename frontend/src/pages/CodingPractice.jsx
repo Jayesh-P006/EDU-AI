@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect, useCallback, useRef} from 'react';
 import CodeEditor from '../components/CodeEditor';
 import api from '../services/api';
 import
@@ -60,7 +60,12 @@ function CodingPractice({embedded})
     const [analysis, setAnalysis]=useState(null);
     const [analysisLoading, setAnalysisLoading]=useState(false);
 
-    useEffect(() => {fetchQuestions();}, []);
+    const questionsFetched = useRef(false);
+    useEffect(() => {
+        if (questionsFetched.current) return;
+        questionsFetched.current = true;
+        fetchQuestions();
+    }, []);
 
     const fetchQuestions=async () =>
     {

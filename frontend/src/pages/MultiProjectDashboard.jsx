@@ -6,9 +6,10 @@ import {
   Loader, Code, GitBranch, ExternalLink, ChevronDown, ChevronUp,
   BarChart3, Award, TrendingUp, RefreshCw, FileText, Layers,
   AlertCircle, X, Search, Cpu, Database, Server, Star, Eye,
+  Mail, Github, Linkedin, User, Sparkles, Activity, ThumbsUp,
 } from 'lucide-react';
 import {
-  fetchMultiProjectAnalysis, getTrustScoreColor, getTrustScoreLabel, getRiskColor,
+  fetchMultiProjectAnalysis, fetchCandidateProfile, getTrustScoreColor, getTrustScoreLabel, getRiskColor,
 } from '../services/recruiterApi';
 import './MultiProjectDashboard.css';
 
@@ -417,7 +418,9 @@ export default function MultiProjectDashboard() {
   const navigate = useNavigate();
 
   const [data, setData] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -426,25 +429,36 @@ export default function MultiProjectDashboard() {
 
   useEffect(() => {
     load();
+    fetchCandidateProfile(candidateId).then(setProfile).catch(() => setProfile(null));
     return () => clearInterval(pollRef.current);
   }, [candidateId]);
 
   async function load(silent = false) {
-    if (!silent) setLoading(true);
+    if (!silent) { setLoading(true); setLoadError(null); }
     else setRefreshing(true);
     try {
       const result = await fetchMultiProjectAnalysis(candidateId);
       setData(result || null);
-      // Keep polling while analysis is in progress
+      setLoadError(null);
+      // Keep polling while analysis is in progress OR while projects list is still empty (queued)
       const status = result?.overallStatus || result?.analysisStatus;
-      if (result && status !== 'completed' && status !== 'failed') {
+      const projectsEmpty = !result?.projects?.length;
+      const stillRunning = result && status !== 'completed' && status !== 'failed' && status !== 'partial_failure';
+      if (stillRunning || projectsEmpty) {
         clearInterval(pollRef.current);
-        pollRef.current = setInterval(() => load(true), 3000);
+        pollRef.current = setInterval(() => load(true), 4000);
       } else {
         clearInterval(pollRef.current);
       }
-    } catch {
-      setData(null);
+    } catch (err) {
+      clearInterval(pollRef.current);
+      const status = err?.response?.status;
+      let message = 'Could not reach the verification service. Please check your connection and try again.';
+      if (status === 429) message = 'GitHub API rate limit reached. Verification will resume automatically — please try again shortly.';
+      else if (status === 404) message = 'No verification data found for this candidate yet.';
+      else if (status >= 500) message = 'The verification service is temporarily unavailable. Please try again in a moment.';
+      setLoadError(message);
+      if (!silent) setData(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -466,15 +480,77 @@ export default function MultiProjectDashboard() {
     );
   }
 
-  if (!data) {
+  if (loadError) {
     return (
       <div className="mpd-loading">
-        <GitBranch size={40} color="var(--text-tertiary)" style={{ marginBottom: 16 }} />
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>No GitHub verification started yet</p>
-        <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-          GitHub repos will appear here once the candidate's resume is analyzed.<br/>
-          Make sure the candidate has submitted their application with a resume.
-        </p>
+        <AlertTriangle size={40} color="var(--danger)" style={{ marginBottom: 16 }} />
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>Could not load verification data</p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 13, maxWidth: 360, textAlign: 'center' }}>{loadError}</p>
+        <button className="mpd-refresh-btn" style={{ marginTop: 24 }} onClick={() => load()}>
+          <RefreshCw size={14} /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!data || (Array.isArray(data.projects) && data.projects.length === 0)) {
+    const status = data?.overallStatus;
+    const isFailed = status === 'failed' || status === 'partial_failure';
+    // Analysis ran to completion but discovered zero repos — distinct from "still queued"
+    const isEmptyResult = status === 'completed' && (data?.totalProjects ?? 0) === 0;
+    const isPending = !isFailed && !isEmptyResult && (status === 'pending' || status === 'in_progress' || data?.message?.includes('No analysis'));
+
+    let body;
+    if (isFailed) {
+      body = (
+        <>
+          <XCircle size={40} color="var(--danger)" style={{ marginBottom: 16 }} />
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>GitHub verification failed</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 13, maxWidth: 380, textAlign: 'center' }}>
+            This can happen when repositories are <strong>private</strong>, the GitHub API <strong>rate limit</strong> was hit,
+            or the verification service encountered an error while cloning/analyzing the code. Try again in a few minutes.
+          </p>
+        </>
+      );
+    } else if (isEmptyResult) {
+      body = (
+        <>
+          <GitBranch size={40} color="var(--text-tertiary)" style={{ marginBottom: 16 }} />
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>No public repositories found</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 13, maxWidth: 380, textAlign: 'center' }}>
+            The resume was parsed but no verifiable GitHub projects were discovered — the candidate's profile may have
+            <strong> no public repositories</strong>, the listed projects may be in <strong>private repos</strong>, or no GitHub
+            links were present in the resume.
+          </p>
+        </>
+      );
+    } else if (isPending) {
+      body = (
+        <>
+          <div className="mpd-spinner" style={{ marginBottom: 16 }} />
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>Analysis queued — waiting for results</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
+            GitHub repositories are being discovered from the resume.<br />
+            This usually takes 30–60 seconds. The page auto-refreshes.
+          </p>
+        </>
+      );
+    } else {
+      body = (
+        <>
+          <GitBranch size={40} color="var(--text-tertiary)" style={{ marginBottom: 16 }} />
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>No GitHub verification started yet</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
+            GitHub repos will appear here once the candidate's resume is analyzed.<br/>
+            Make sure the candidate has submitted their application with a resume and a GitHub URL.
+          </p>
+        </>
+      );
+    }
+
+    return (
+      <div className="mpd-loading">
+        {body}
         <button className="mpd-refresh-btn" style={{ marginTop: 24 }} onClick={() => load()}>
           <RefreshCw size={14} /> Check Again
         </button>
@@ -491,6 +567,30 @@ export default function MultiProjectDashboard() {
   const runningCount = (d.projects || []).filter(p => p.status === 'running' || p.status === 'pending').length;
   const totalProjects = (d.projects || []).length;
   const analysisProgress = totalProjects > 0 ? Math.round(((completedCount + partialCount) / totalProjects) * 100) : 0;
+
+  // ── Authenticity Analysis — derived from real per-project verification scores ──
+  const scoredProjects = (d.projects || []).filter(p => p.trustScore != null);
+  const claimTotals = scoredProjects.reduce((acc, p) => ({
+    verified: acc.verified + (p.claimsVerified || 0),
+    total: acc.total + (p.totalClaims || 0),
+  }), { verified: 0, total: 0 });
+  const avg = (key) => {
+    const vals = scoredProjects.map(p => p[key]).filter(v => v != null);
+    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+  };
+  const githubAuthenticityScore = d.authenticityScore;
+  // Resume authenticity = how much of what the candidate claimed was actually verified in their repos
+  const resumeAuthenticityScore = claimTotals.total > 0
+    ? Math.round((claimTotals.verified / claimTotals.total) * 100)
+    : null;
+  // AI-generated probability is the inverse of the code-authenticity signal the
+  // pipeline already computes (low authenticity ⇒ higher likelihood of templated/AI code)
+  const aiGeneratedProbability = githubAuthenticityScore != null
+    ? Math.max(0, Math.min(100, Math.round(100 - githubAuthenticityScore)))
+    : null;
+  // Project completion approximated from architecture-completeness scores across analyzed repos
+  const projectCompletionScore = avg('architectureScore');
+  const hasAuthenticityData = totalProjects > 0 && d.overallTrustScore != null;
 
   const pipelineSteps = [
     { id: 'resume_uploaded', label: 'Resume Uploaded', detail: 'Resume stored securely', done: true, ts: '10:30:00' },
@@ -549,6 +649,55 @@ export default function MultiProjectDashboard() {
       <div className="mpd-body">
         {/* Left Sidebar */}
         <aside className="mpd-sidebar">
+          {/* Candidate Overview */}
+          <motion.div className="mpd-sidebar-card mpd-overview-card" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
+            <h3 className="mpd-sidebar-card-title">CANDIDATE OVERVIEW</h3>
+            <ul className="mpd-overview-list">
+              <li>
+                <User size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">Name</span>
+                <span className="mpd-overview-value">{profile?.name || d.candidateName || '—'}</span>
+              </li>
+              <li>
+                <Mail size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">Email</span>
+                <span className="mpd-overview-value">{profile?.email || '—'}</span>
+              </li>
+              <li>
+                <Github size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">GitHub</span>
+                {profile?.github
+                  ? <a className="mpd-overview-link" href={profile.github} target="_blank" rel="noreferrer">
+                      {profile.github.replace(/^https?:\/\/(www\.)?/, '')} <ExternalLink size={11} />
+                    </a>
+                  : <span className="mpd-overview-value">—</span>}
+              </li>
+              <li>
+                <Linkedin size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">LinkedIn</span>
+                {profile?.linkedin
+                  ? <a className="mpd-overview-link" href={profile.linkedin} target="_blank" rel="noreferrer">
+                      View profile <ExternalLink size={11} />
+                    </a>
+                  : <span className="mpd-overview-value">—</span>}
+              </li>
+              <li>
+                <FileText size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">Resume Score</span>
+                <span className="mpd-overview-value" style={{ color: profile?.resumeScore != null ? getTrustScoreColor(profile.resumeScore) : undefined }}>
+                  {profile?.resumeScore != null ? `${profile.resumeScore}/100` : '—'}
+                </span>
+              </li>
+              <li>
+                <Shield size={13} color="var(--text-tertiary)" />
+                <span className="mpd-overview-label">Verification Score</span>
+                <span className="mpd-overview-value" style={{ color: d.overallTrustScore != null ? trustColor : undefined }}>
+                  {d.overallTrustScore != null ? `${d.overallTrustScore}/100` : 'Computing…'}
+                </span>
+              </li>
+            </ul>
+          </motion.div>
+
           {/* Overall Score */}
           <motion.div className="mpd-sidebar-card mpd-score-card" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
             <h3 className="mpd-sidebar-card-title mpd-score-card-title">CANDIDATE TRUST SCORE</h3>
@@ -694,6 +843,70 @@ export default function MultiProjectDashboard() {
               ))
             )}
           </div>
+
+          {/* Authenticity Analysis */}
+          {hasAuthenticityData && (
+            <motion.div className="mpd-aggregate-card mpd-authenticity-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
+              <h2 className="mpd-aggregate-title">
+                <Sparkles size={16} color="#a855f7" /> Authenticity Analysis
+              </h2>
+              <div className="mpd-authenticity-grid">
+                <div className="mpd-auth-metric">
+                  <div className="mpd-auth-metric-head">
+                    <FileText size={14} color="#3b82f6" />
+                    <span>Resume Authenticity Score</span>
+                  </div>
+                  <div className="mpd-auth-metric-val" style={{ color: resumeAuthenticityScore != null ? getTrustScoreColor(resumeAuthenticityScore) : 'var(--text-tertiary)' }}>
+                    {resumeAuthenticityScore != null ? `${resumeAuthenticityScore}/100` : '—'}
+                  </div>
+                  <p className="mpd-auth-metric-note">Share of resume claims verified against the candidate's repositories ({claimTotals.verified}/{claimTotals.total} claims)</p>
+                </div>
+
+                <div className="mpd-auth-metric">
+                  <div className="mpd-auth-metric-head">
+                    <Github size={14} color="#e2e8f0" />
+                    <span>GitHub Authenticity Score</span>
+                  </div>
+                  <div className="mpd-auth-metric-val" style={{ color: githubAuthenticityScore != null ? getTrustScoreColor(githubAuthenticityScore) : 'var(--text-tertiary)' }}>
+                    {githubAuthenticityScore != null ? `${githubAuthenticityScore}/100` : '—'}
+                  </div>
+                  <p className="mpd-auth-metric-note">How original and authored (vs. copied/templated) the analyzed code appears to be</p>
+                </div>
+
+                <div className="mpd-auth-metric">
+                  <div className="mpd-auth-metric-head">
+                    <Cpu size={14} color="#eab308" />
+                    <span>AI-Generated Code Probability</span>
+                  </div>
+                  <div className="mpd-auth-metric-val" style={{ color: aiGeneratedProbability != null ? getRiskColor(aiGeneratedProbability > 60 ? 'HIGH' : aiGeneratedProbability > 30 ? 'MEDIUM' : 'LOW') : 'var(--text-tertiary)' }}>
+                    {aiGeneratedProbability != null ? `${aiGeneratedProbability}%` : '—'}
+                  </div>
+                  <p className="mpd-auth-metric-note">Derived from the code-authenticity signal — lower authenticity raises the likelihood of templated or AI-generated code</p>
+                </div>
+
+                <div className="mpd-auth-metric">
+                  <div className="mpd-auth-metric-head">
+                    <Layers size={14} color="#22c55e" />
+                    <span>Project Completion Score</span>
+                  </div>
+                  <div className="mpd-auth-metric-val" style={{ color: projectCompletionScore != null ? getTrustScoreColor(projectCompletionScore) : 'var(--text-tertiary)' }}>
+                    {projectCompletionScore != null ? `${projectCompletionScore}/100` : '—'}
+                  </div>
+                  <p className="mpd-auth-metric-note">Average architecture &amp; completeness score across all analyzed repositories</p>
+                </div>
+              </div>
+
+              {d.recommendation && (
+                <div className="mpd-auth-recommendation" style={{ borderColor: `${trustColor}40`, background: `${trustColor}10` }}>
+                  <ThumbsUp size={16} color={trustColor} />
+                  <div>
+                    <div className="mpd-auth-rec-label">Recruiter Recommendation</div>
+                    <div className="mpd-auth-rec-text" style={{ color: trustColor }}>{d.recommendation}</div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Aggregated Score Table */}
           {d.overallTrustScore != null && (

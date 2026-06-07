@@ -75,7 +75,7 @@ function AxiomChat()
       <div className="axiom-chat-messages">
         {messages.length===0? (
           <div className="welcome-message">
-            <h2>👋 Welcome to Spec AI!</h2>
+            <h2>Welcome to Spec AI!</h2>
             <p>I'm your personalized AI assistant for career guidance and interview preparation.</p>
             <div className="suggestions">
               <h3>Try asking me:</h3>

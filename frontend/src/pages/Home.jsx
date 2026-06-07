@@ -1,6 +1,6 @@
-import {useState, useEffect, useRef, useMemo} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {motion, useInView, useScroll, useTransform, AnimatePresence} from 'framer-motion';
+import {motion, useInView, useScroll, useTransform} from 'framer-motion';
 import
     {
         Briefcase as BriefcaseIcon,
@@ -43,47 +43,13 @@ function useCounter(end, duration=2000, startCounting=false)
     return count;
 }
 
-/* ── Floating Particles ── */
-function FloatingParticles()
-{
-    const particles=useMemo(() =>
-        Array.from({length: 40}, (_, i) => ({
-            id: i,
-            x: Math.random()*100,
-            y: Math.random()*100,
-            size: Math.random()*3+1,
-            duration: Math.random()*20+15,
-            delay: Math.random()*10,
-        })), []);
-
-    return (
-        <div className="floating-particles">
-            {particles.map(p => (
-                <motion.div
-                    key={p.id}
-                    className="particle"
-                    style={{left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size}}
-                    animate={{
-                        y: [0, -30, 0, 30, 0],
-                        x: [0, 15, -15, 10, 0],
-                        opacity: [0, 0.6, 0.3, 0.6, 0],
-                    }}
-                    transition={{duration: p.duration, repeat: Infinity, delay: p.delay, ease: 'easeInOut'}}
-                />
-            ))}
-        </div>
-    );
-}
-
-/* ── Animated Grid Background ── */
+/* ── Subtle Grid Background ── */
 function GridBackground()
 {
     return (
         <div className="grid-bg">
             <div className="grid-lines" />
-            <div className="grid-glow glow-1" />
-            <div className="grid-glow glow-2" />
-            <div className="grid-glow glow-3" />
+            <div className="grid-vignette" />
         </div>
     );
 }
@@ -169,7 +135,7 @@ function StatCard({icon: Icon, value, suffix, label, delay})
             initial={{opacity: 0, y: 30}}
             animate={isInView? {opacity: 1, y: 0}:{}}
             transition={{duration: 0.6, delay}}
-            whileHover={{y: -6, borderColor: 'rgba(255,255,255,0.15)'}}
+            whileHover={{y: -4}}
         >
             <div className="stat-icon"><Icon size={22} /></div>
             <div className="stat-value">{count}{suffix}</div>
@@ -191,13 +157,13 @@ function ModeCard({icon: Icon, badge, badgeAccent, title, description, features,
             initial={{opacity: 0, y: 50, scale: 0.95}}
             animate={isInView? {opacity: 1, y: 0, scale: 1}:{}}
             transition={{duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94]}}
-            whileHover={{y: -8, borderColor: 'rgba(255,255,255,0.12)'}}
+            whileHover={{y: -4}}
         >
             <div className="mode-card-header">
                 <motion.div
                     className="mode-icon"
-                    whileHover={{rotate: [0, -10, 10, 0], scale: 1.1}}
-                    transition={{duration: 0.5}}
+                    whileHover={{scale: 1.08}}
+                    transition={{duration: 0.2}}
                 >
                     <Icon size={28} />
                 </motion.div>
@@ -234,12 +200,12 @@ function FeatureCard({icon: Icon, title, description, delay})
             initial={{opacity: 0, y: 40, scale: 0.95}}
             animate={isInView? {opacity: 1, y: 0, scale: 1}:{}}
             transition={{duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94]}}
-            whileHover={{y: -6, borderColor: 'rgba(255,255,255,0.12)', scale: 1.02}}
+            whileHover={{y: -4}}
         >
             <motion.div
                 className="feature-icon"
-                whileHover={{rotate: 360, scale: 1.15}}
-                transition={{duration: 0.6}}
+                whileHover={{scale: 1.08}}
+                transition={{duration: 0.2}}
             >
                 <Icon size={32} />
             </motion.div>
@@ -348,7 +314,6 @@ function Home()
         <div className="home">
             <Navbar />
             <GridBackground />
-            <FloatingParticles />
 
             {/* ─── Hero Section ─── */}
             <motion.section className="hero" style={{opacity: heroOpacity, scale: heroScale}}>
@@ -401,7 +366,7 @@ function Home()
                         <motion.button
                             className="btn btn-primary btn-large"
                             onClick={() => navigate('/register')}
-                            whileHover={{scale: 1.05, boxShadow: '0 0 30px rgba(255,255,255,0.15)'}}
+                            whileHover={{scale: 1.02, y: -1}}
                             whileTap={{scale: 0.95}}
                         >
                             Get Started <ArrowRightIcon size={18} />
@@ -486,7 +451,7 @@ function Home()
                             <motion.button
                                 className="btn btn-primary btn-large"
                                 onClick={() => navigate('/register')}
-                                whileHover={{scale: 1.05, boxShadow: '0 0 40px rgba(255,255,255,0.12)'}}
+                                whileHover={{scale: 1.02, y: -1}}
                                 whileTap={{scale: 0.95}}
                             >
                                 Start for Free <ArrowRightIcon size={18} />

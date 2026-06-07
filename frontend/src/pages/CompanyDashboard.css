@@ -124,14 +124,14 @@ a/* ── Company Dashboard ─────────────────
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
   color: #fff;
-  border: 2px solid rgba(102, 126, 234, 0.3);
+  border: 2px solid rgba(255, 107, 53, 0.3);
 }
 
 /* ── Main ────────────────────────────────────────────────────────── */
@@ -169,7 +169,7 @@ a/* ── Company Dashboard ─────────────────
   align-items: center;
   gap: 6px;
   padding: 0.6rem 1.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -181,7 +181,7 @@ a/* ── Company Dashboard ─────────────────
 }
 .cmpd-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.35);
 }
 
 .cmpd-btn-secondary {
@@ -389,20 +389,20 @@ a/* ── Company Dashboard ─────────────────
   color: #22c55e;
 }
 .cmpd-status-pill.in-progress {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
 }
 .cmpd-status-pill.pending {
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
 }
 .cmpd-status-pill.completed {
   background: rgba(34, 197, 94, 0.12);
   color: #22c55e;
 }
 .cmpd-status-pill.scheduled {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 /* ── Pipeline ────────────────────────────────────────────────────── */
@@ -615,8 +615,8 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 100px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
   letter-spacing: 0.3px;
 }
 .ov-panel-badge-purple {
@@ -624,8 +624,8 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 100px;
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
+  background: rgba(255, 107, 53, 0.12);
+  color: #FF8C42;
   letter-spacing: 0.3px;
 }
 .ov-panel-badge-green {
@@ -761,7 +761,7 @@ a/* ── Company Dashboard ─────────────────
 }
 .ov-lb-filter:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.5);
+  border-color: rgba(255, 107, 53, 0.5);
 }
 
 /* Table wrapper */
@@ -869,7 +869,7 @@ a/* ── Company Dashboard ─────────────────
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6366f1, #a855f7);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -943,11 +943,11 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 800;
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.15),
-    rgba(168, 85, 247, 0.15)
+    rgba(255, 107, 53, 0.15),
+    rgba(255, 140, 66, 0.15)
   );
-  color: #c4b5fd;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #FFB366;
+  border: 1px solid rgba(255, 107, 53, 0.2);
 }
 
 /* Action buttons */
@@ -978,14 +978,14 @@ a/* ── Company Dashboard ─────────────────
   box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
 }
 .ov-lb-call-btn.ov-lb-mail {
-  border-color: rgba(59, 130, 246, 0.25);
-  background: rgba(59, 130, 246, 0.08);
-  color: #60a5fa;
+  border-color: rgba(255, 140, 66, 0.25);
+  background: rgba(255, 140, 66, 0.08);
+  color: #FF8C42;
 }
 .ov-lb-call-btn.ov-lb-mail:hover {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+  background: rgba(255, 140, 66, 0.18);
+  border-color: rgba(255, 140, 66, 0.4);
+  box-shadow: 0 0 12px rgba(255, 140, 66, 0.15);
 }
 .ov-lb-view-btn {
   width: 28px;
@@ -1070,13 +1070,13 @@ a/* ── Company Dashboard ─────────────────
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
+  background: rgba(255, 107, 53, 0.1);
+  color: #FF8C42;
   flex-shrink: 0;
 }
 .ov-list-icon-interview {
-  background: rgba(168, 85, 247, 0.1);
-  color: #c084fc;
+  background: rgba(255, 179, 102, 0.12);
+  color: #FFB366;
 }
 .ov-list-info {
   flex: 1;
@@ -1147,17 +1147,17 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(168, 85, 247, 0.25);
-  background: rgba(168, 85, 247, 0.08);
-  color: #c084fc;
+  border: 1px solid rgba(255, 107, 53, 0.25);
+  background: rgba(255, 107, 53, 0.08);
+  color: #FF8C42;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 .ov-ai-insights-btn:hover {
-  background: rgba(168, 85, 247, 0.18);
-  border-color: rgba(168, 85, 247, 0.4);
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.15);
+  background: rgba(255, 107, 53, 0.18);
+  border-color: rgba(255, 107, 53, 0.4);
+  box-shadow: 0 0 12px rgba(255, 107, 53, 0.15);
 }
 
 /* AI Match Badge (glowing) */
@@ -1168,22 +1168,22 @@ a/* ── Company Dashboard ─────────────────
   border-radius: 100px;
   background: linear-gradient(
     135deg,
-    rgba(34, 211, 238, 0.15),
-    rgba(168, 85, 247, 0.15)
+    rgba(255, 107, 53, 0.15),
+    rgba(255, 140, 66, 0.15)
   );
-  color: #67e8f9;
-  border: 1px solid rgba(34, 211, 238, 0.2);
+  color: #FFB366;
+  border: 1px solid rgba(255, 107, 53, 0.2);
   animation: ov-glow 2.5s ease-in-out infinite alternate;
   white-space: nowrap;
 }
 @keyframes ov-glow {
   0% {
-    box-shadow: 0 0 4px rgba(34, 211, 238, 0.15);
+    box-shadow: 0 0 4px rgba(255, 107, 53, 0.15);
   }
   100% {
     box-shadow:
-      0 0 14px rgba(34, 211, 238, 0.3),
-      0 0 4px rgba(168, 85, 247, 0.2);
+      0 0 14px rgba(255, 107, 53, 0.3),
+      0 0 4px rgba(255, 140, 66, 0.2);
   }
 }
 
@@ -1369,7 +1369,7 @@ a/* ── Company Dashboard ─────────────────
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1687,16 +1687,16 @@ a/* ── Company Dashboard ─────────────────
   text-transform: capitalize;
 }
 .cmpd-status-pill.scheduled {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 .cmpd-status-pill.active {
   background: rgba(34, 197, 94, 0.15);
   color: #22c55e;
 }
 .cmpd-status-pill.completed {
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
 }
 .cmpd-status-pill.cancelled {
   background: rgba(239, 68, 68, 0.15);
@@ -1729,12 +1729,12 @@ a/* ── Company Dashboard ─────────────────
 .cmpd-modal-section-title {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #667eea;
+  color: #FF6B35;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 1rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
 }
 .cmpd-form-hint {
   display: block;
@@ -1749,7 +1749,7 @@ a/* ── Company Dashboard ─────────────────
   user-select: none;
 }
 .cmpd-checkbox-label input[type="checkbox"] {
-  accent-color: #667eea;
+  accent-color: #FF6B35;
   width: 16px;
   height: 16px;
 }
@@ -1789,18 +1789,18 @@ a/* ── Company Dashboard ─────────────────
   font-family: inherit;
 }
 .ats-pill:hover {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 107, 53, 0.08);
+  border-color: rgba(255, 107, 53, 0.3);
   color: var(--text-primary, #fff);
 }
 .ats-pill.active {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.2),
-    rgba(139, 92, 246, 0.2)
+    rgba(255, 107, 53, 0.2),
+    rgba(255, 140, 66, 0.2)
   );
-  border-color: rgba(99, 102, 241, 0.5);
-  color: #a5b4fc;
+  border-color: rgba(255, 107, 53, 0.5);
+  color: #FFB366;
   font-weight: 600;
 }
 .ats-pill-count {
@@ -1811,7 +1811,7 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 700;
 }
 .ats-pill.active .ats-pill-count {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 107, 53, 0.3);
 }
 
 /* ── ATS Action Bar ────────────────────────────────────────────── */
@@ -1908,12 +1908,12 @@ a/* ── Company Dashboard ─────────────────
   transform: translateY(-1px);
 }
 .ats-btn-rescore {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(255, 107, 53, 0.15);
+  color: #FFB366;
+  border: 1px solid rgba(255, 107, 53, 0.25);
 }
 .ats-btn-rescore:hover:not(:disabled) {
-  background: rgba(99, 102, 241, 0.25);
+  background: rgba(255, 107, 53, 0.25);
 }
 .ats-btn:disabled {
   opacity: 0.5;
@@ -1954,7 +1954,7 @@ a/* ── Company Dashboard ─────────────────
 .ats-table-count {
   font-size: 0.78rem;
   color: var(--text-muted, #888);
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(255, 107, 53, 0.12);
   padding: 3px 12px;
   border-radius: 99px;
   font-weight: 600;
@@ -2001,7 +2001,7 @@ a/* ── Company Dashboard ─────────────────
   transition: background 0.15s;
 }
 .ats-table tbody tr:hover {
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(255, 107, 53, 0.04);
 }
 .ats-empty-row {
   text-align: center;
@@ -2177,8 +2177,8 @@ a/* ── Company Dashboard ─────────────────
   letter-spacing: 0.02em;
 }
 .ats-status-badge.applied {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 .ats-status-badge.shortlisted {
   background: rgba(34, 197, 94, 0.15);
@@ -2193,8 +2193,8 @@ a/* ── Company Dashboard ─────────────────
   color: #ef4444;
 }
 .ats-status-badge.interview {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
 }
 .ats-status-badge.selected,
 .ats-status-badge.offered,
@@ -2236,9 +2236,9 @@ a/* ── Company Dashboard ─────────────────
   transition: all 0.15s;
 }
 .ats-act-btn.view:hover {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.4);
-  color: #a5b4fc;
+  background: rgba(255, 107, 53, 0.15);
+  border-color: rgba(255, 107, 53, 0.4);
+  color: #FF8C42;
 }
 .ats-act-btn.schedule:hover {
   background: rgba(34, 197, 94, 0.15);
@@ -2249,14 +2249,14 @@ a/* ── Company Dashboard ─────────────────
   text-decoration: none;
 }
 .ats-act-btn.resume:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
+  background: rgba(255, 179, 102, 0.15);
+  border-color: rgba(255, 179, 102, 0.4);
+  color: #FFB366;
 }
 .ats-act-btn.github:hover {
-  background: rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.4);
-  color: #c084fc;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text-primary);
 }
 .ats-act-btn:disabled {
   opacity: 0.4;
@@ -2330,13 +2330,13 @@ a/* ── Company Dashboard ─────────────────
   border-radius: 10px;
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.2),
-    rgba(139, 92, 246, 0.2)
+    rgba(255, 107, 53, 0.2),
+    rgba(255, 140, 66, 0.2)
   );
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a5b4fc;
+  color: #FFB366;
 }
 .ats-job-section-title h3 {
   margin: 0;
@@ -2352,10 +2352,10 @@ a/* ── Company Dashboard ─────────────────
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.2);
   border-radius: 8px;
-  color: #a5b4fc;
+  color: #FFB366;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -2363,7 +2363,7 @@ a/* ── Company Dashboard ─────────────────
   font-family: inherit;
 }
 .ats-view-all-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(255, 107, 53, 0.2);
 }
 
 /* ── Candidates Grid ───────────────────────────────────────────── */
@@ -2387,7 +2387,7 @@ a/* ── Company Dashboard ─────────────────
   gap: 10px;
 }
 .ats-candidate-card:hover {
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(255, 107, 53, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
@@ -2451,7 +2451,7 @@ a/* ── Company Dashboard ─────────────────
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 3px solid var(--ring-color, #6366f1);
+  border: 3px solid var(--ring-color, #FF6B35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2602,15 +2602,15 @@ a/* ── Company Dashboard ─────────────────
   align-items: center;
   gap: 10px;
   padding: 12px 18px;
-  background: rgba(59, 130, 246, 0.06);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: rgba(255, 107, 53, 0.06);
+  border: 1px solid rgba(255, 107, 53, 0.15);
   border-radius: 10px;
   margin-bottom: 16px;
   color: var(--text-secondary, #aaa);
   font-size: 0.82rem;
 }
 .ats-resume-download-bar svg {
-  color: #3b82f6;
+  color: #FF8C42;
   flex-shrink: 0;
 }
 .ats-resume-dl-btn {
@@ -2620,7 +2620,7 @@ a/* ── Company Dashboard ─────────────────
   gap: 6px;
   padding: 6px 14px;
   border-radius: 6px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #FF6B35, #FF8C42);
   color: #fff;
   font-size: 0.78rem;
   font-weight: 500;
@@ -2628,7 +2628,7 @@ a/* ── Company Dashboard ─────────────────
   transition: 0.2s;
 }
 .ats-resume-dl-btn:hover {
-  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 3px 12px rgba(255, 107, 53, 0.3);
   transform: translateY(-1px);
 }
 
@@ -2822,8 +2822,8 @@ a/* ── Company Dashboard ─────────────────
   color: #f87171;
 }
 .ats-skill-tag.neutral {
-  background: rgba(99, 102, 241, 0.12);
-  color: #a5b4fc;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #aaa);
 }
 .ats-no-data {
   font-size: 0.78rem;
@@ -2908,6 +2908,43 @@ a/* ── Company Dashboard ─────────────────
   font-weight: 600;
   margin: 0 0 10px;
   color: var(--text-secondary, #bbb);
+}
+
+/* Resume Parsed Section */
+.ats-resume-parsed-section {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255,107,53,0.06);
+  border: 1px solid rgba(255,107,53,0.18);
+}
+.ats-resume-parsed-section h4 {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; font-weight: 600; margin: 0 0 14px;
+  color: #FFB366;
+}
+.ats-rp-block { margin-bottom: 14px; }
+.ats-rp-block:last-child { margin-bottom: 0; }
+.ats-rp-row { display: flex; gap: 24px; margin-bottom: 14px; }
+.ats-rp-label {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-secondary, #888); margin-bottom: 6px;
+}
+.ats-rp-value { font-size: 0.9rem; color: var(--text-primary, #eee); font-weight: 500; }
+.ats-rp-capitalize { text-transform: capitalize; }
+.ats-rp-edu-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.ats-rp-edu-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 0.78rem; background: rgba(255,255,255,0.07); color: var(--text-primary, #eee); border: 1px solid rgba(255,255,255,0.1);
+}
+.ats-rp-edu-tag.cgpa { background: rgba(34,197,94,0.12); color: #86efac; border-color: rgba(34,197,94,0.25); }
+.ats-rp-edu-tag.inst { background: rgba(255, 255, 255, 0.07); color: var(--text-primary, #eee); border-color: rgba(255, 255, 255, 0.12); }
+
+.ats-resume-parsed-empty {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+  color: var(--text-secondary, #777); font-size: 0.82rem; font-style: italic;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

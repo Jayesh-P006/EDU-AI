@@ -44,7 +44,7 @@ export default function QuizJoin()
     return (
         <div className="qj-root">
             <div className="qj-card">
-                <div className="qj-logo">🎯</div>
+                <div className="qj-logo"><span style={{display: 'inline-block', width: '40px', height: '40px', borderRadius: '50%', border: '4px solid var(--accent-primary, #FF6B35)'}} /></div>
                 <h1 className="qj-title">Join Quiz</h1>
 
                 {error&&<div className="qj-error">{error}</div>}
@@ -71,8 +71,8 @@ export default function QuizJoin()
                                 <div className="qj-quiz-title">{quizInfo.title}</div>
                                 <div className="qj-quiz-meta">
                                     <span className={`qj-diff qj-diff-${quizInfo.difficulty}`}>{quizInfo.difficulty}</span>
-                                    <span>📝 {quizInfo.questionCount} questions</span>
-                                    <span>🎙 Host: {quizInfo.hostName}</span>
+                                    <span>{quizInfo.questionCount} questions</span>
+                                    <span>Host: {quizInfo.hostName}</span>
                                 </div>
                             </div>
                             <form className="qj-form" onSubmit={handleJoin}>
@@ -84,7 +84,7 @@ export default function QuizJoin()
                                     maxLength={30}
                                     autoFocus
                                 />
-                                <button className="qj-btn" type="submit">Join Now 🚀</button>
+                                <button className="qj-btn" type="submit">Join Now</button>
                                 <button className="qj-btn-secondary" type="button" onClick={() => {setQuizInfo(null); setCode('');}}>
                                     ‹ Different code
                                 </button>

@@ -273,6 +273,43 @@ async def get_group_status(
     if not jobs:
         raise HTTPException(status_code=404, detail="No analysis jobs found for this candidate")
 
+    # ── Batch-fetch related rows for all completed jobs up front ─────────────
+    # (avoids an N+1 query storm — previously this issued up to 3 sequential
+    # queries per completed job, which made this endpoint take 25-30s for
+    # candidates with 20+ discovered repos)
+    completed_job_ids = [job.id for job in jobs if job.status == JobStatus.COMPLETED]
+
+    results_by_job_id: dict = {}
+    claims_by_result_id: dict = {}
+    meta_by_job_id: dict = {}
+
+    if completed_job_ids:
+        res_rows = await db.execute(
+            select(AnalysisResult).where(AnalysisResult.analysis_id.in_(completed_job_ids))
+        )
+        all_results = res_rows.scalars().all()
+        results_by_job_id = {r.analysis_id: r for r in all_results}
+
+        result_ids = [r.id for r in all_results]
+        if result_ids:
+            claim_rows = await db.execute(
+                select(ClaimResult).where(ClaimResult.analysis_result_id.in_(result_ids))
+            )
+            for c in claim_rows.scalars().all():
+                claims_by_result_id.setdefault(c.analysis_result_id, []).append(c)
+
+        meta_rows = await db.execute(
+            select(RepositoryMetadata).where(RepositoryMetadata.analysis_id.in_(completed_job_ids))
+        )
+        meta_by_job_id = {m.analysis_id: m for m in meta_rows.scalars().all()}
+
+    def _claim_status(c: ClaimResult) -> str:
+        if c.verified:
+            return "verified"
+        if c.confidence >= 50:
+            return "partial"
+        return "failed"
+
     project_statuses: List[ProjectStatus] = []
     trust_scores = []
     auth_scores = []
@@ -294,10 +331,7 @@ async def get_group_status(
 
         if job.status == JobStatus.COMPLETED:
             # ── Scores ──────────────────────────────────────────
-            res_row = await db.execute(
-                select(AnalysisResult).where(AnalysisResult.analysis_id == job.id)
-            )
-            res = res_row.scalar_one_or_none()
+            res = results_by_job_id.get(job.id)
             if res:
                 trust = round(res.trust_score, 1)
                 auth = round(res.authenticity_score, 1)
@@ -308,19 +342,9 @@ async def get_group_status(
                 arch_scores.append(arch)
 
                 # ── Claim results ────────────────────────────────
-                claim_rows = await db.execute(
-                    select(ClaimResult).where(ClaimResult.analysis_result_id == res.id)
-                )
-                claims = claim_rows.scalars().all()
+                claims = claims_by_result_id.get(res.id, [])
                 total_claims = len(claims)
                 claims_verified = sum(1 for c in claims if c.verified)
-
-                def _claim_status(c: ClaimResult) -> str:
-                    if c.verified:
-                        return "verified"
-                    if c.confidence >= 50:
-                        return "partial"
-                    return "failed"
 
                 claim_verification = [
                     ClaimVerificationItem(
@@ -334,10 +358,7 @@ async def get_group_status(
                 ]
 
             # ── Repo metadata ────────────────────────────────────
-            meta_row = await db.execute(
-                select(RepositoryMetadata).where(RepositoryMetadata.analysis_id == job.id)
-            )
-            meta = meta_row.scalar_one_or_none()
+            meta = meta_by_job_id.get(job.id)
             if meta:
                 raw_langs = meta.languages or {}
                 # Normalize: DB stores {lang: {files, percentage}} — UI wants {lang: number}

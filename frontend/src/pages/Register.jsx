@@ -8,7 +8,7 @@ import
   Camera, Loader2
 } from 'lucide-react';
 import ScannerOverlay from '../components/ScannerOverlay';
-import {loadFaceModels, extractDescriptor} from '../services/faceRecognition';
+import {loadFaceModels, extractDescriptorStrict} from '../services/faceRecognition';
 import api from '../services/api';
 import './Register.css';
 
@@ -80,7 +80,7 @@ function Register()
       setStep(STEPS.OTP);
     } catch (err)
     {
-      setError(err.response?.data?.message||'Failed to send OTP');
+      setError(err.response?.data?.error||err.response?.data?.message||'Failed to send OTP');
     } finally
     {
       setLoading(false);
@@ -100,7 +100,7 @@ function Register()
       }
     } catch (err)
     {
-      setError(err.response?.data?.message||'Invalid OTP');
+      setError(err.response?.data?.error||err.response?.data?.message||'Invalid OTP');
     } finally
     {
       setLoading(false);
@@ -122,17 +122,25 @@ function Register()
       return;
     }
 
-    // Extract face descriptor immediately so we can retry if face not detected
     try
     {
-      const result=await extractDescriptor(imageSrc);
-      if (!result)
+      // extractDescriptorStrict throws a user-facing Error for every bad-frame condition
+      const result=await extractDescriptorStrict(imageSrc);
+
+      // On the first (CENTER) capture, check Pinecone for an existing face
+      if (step===STEPS.CENTER)
       {
-        setScanStatus('error');
-        setError('No face detected — keep your face visible and try again');
-        return;
+        try
+        {
+          const checkRes=await api.post('/auth/check-face', {descriptor: result.descriptor});
+          if (checkRes.data?.data?.exists)
+          {
+            setScanStatus('error');
+            setError('This face is already registered. Please sign in instead.');
+            return;
+          }
+        } catch (_) { /* Pinecone unavailable — let final /register catch it */ }
       }
-      console.log(`[REGISTER] Capture OK: confidence=${result.detection.score.toFixed(3)}, dim=${result.descriptor.length}`);
 
       setScanStatus('success');
       setImages(prev => [...prev, imageSrc]);
@@ -148,7 +156,7 @@ function Register()
     } catch (err)
     {
       setScanStatus('error');
-      setError('Face detection failed — please try again');
+      setError(err.message||'Face detection failed — please try again');
       console.error('[REGISTER] Capture error:', err);
     }
   }, [step]);
@@ -196,7 +204,7 @@ function Register()
       navigate(dashPath);
     } catch (err)
     {
-      setError(err.response?.data?.message||'Registration failed');
+      setError(err.response?.data?.error||err.response?.data?.message||'Registration failed');
     } finally
     {
       setLoading(false);
@@ -321,7 +329,7 @@ function Register()
                             <span>{opt.label}</span>
                             <small>{opt.description}</small>
                           </div>
-                          {role===opt.value&&<Check size={14} color="#3b82f6" />}
+                          {role===opt.value&&<Check size={14} color="#FF6B35" />}
                         </button>
                       ))}
                     </div>

@@ -499,7 +499,7 @@ router.get('/:candidateId/multi', async (req, res) => {
         params: { candidateId },
         headers: { 'x-api-key': RESUME_VERIFIER_API_KEY },
         validateStatus: null,
-        timeout: 8000,
+        timeout: 45000,
       }
     );
     // 404 = no jobs for this candidate yet — return empty state, not an error

@@ -476,22 +476,30 @@ function CompanyDashboard()
     if (user&&activeTab==='overview') fetchLeaderboard(user.id, leaderboardFilter);
   }, [user, activeTab, leaderboardFilter]);
 
-  const fetchAllCandidatesByJob=async (jobsList) =>
+  const fetchAllCandidatesByJob=async (_jobsList) =>
   {
+    if (!user?.id) return;
     setLoadingAllCandidates(true);
-    const result={};
-    for (const j of jobsList)
+    try
     {
-      try
+      const res=await api.get(`/jobs/company/${user.id}/all-applicants`);
+      const applicants=res.data.applicants||[];
+      // Group by jobId → { [jobId]: { title, applicants[] } }
+      const result={};
+      for (const app of applicants)
       {
-        const jid=j.id||j._id;
-        const res=await api.get(`/jobs/${jid}/applicants`);
-        const applicants=res.data.applicants||[];
-        if (applicants.length>0) result[jid]={title: j.title, applicants};
-      } catch {}
+        const jid=String(app.jobId);
+        if (!result[jid]) result[jid]={title: app.jobTitle, applicants: []};
+        result[jid].applicants.push(app);
+      }
+      setJobWiseCandidates(result);
+    } catch (err)
+    {
+      console.error('fetchAllCandidatesByJob error:', err);
+    } finally
+    {
+      setLoadingAllCandidates(false);
     }
-    setJobWiseCandidates(result);
-    setLoadingAllCandidates(false);
   };
 
   const handleLogout=() =>
@@ -642,16 +650,16 @@ function CompanyDashboard()
       radialBar: {
         startAngle: -135, endAngle: 135,
         hollow: {size: '60%'},
-        track: {background: 'rgba(168,85,247,0.12)', strokeWidth: '100%'},
+        track: {background: 'rgba(255,107,53,0.12)', strokeWidth: '100%'},
         dataLabels: {
-          name: {show: true, fontSize: '11px', color: '#a78bfa', offsetY: 18, fontFamily: 'inherit'},
-          value: {show: true, fontSize: '1.5rem', fontWeight: 800, color: '#e9d5ff', offsetY: -12, fontFamily: 'inherit', formatter: (v) => `${v}%`},
+          name: {show: true, fontSize: '11px', color: '#FFB366', offsetY: 18, fontFamily: 'inherit'},
+          value: {show: true, fontSize: '1.5rem', fontWeight: 800, color: '#FFE0CC', offsetY: -12, fontFamily: 'inherit', formatter: (v) => `${v}%`},
         },
       }
     },
     stroke: {lineCap: 'round'},
-    fill: {type: 'gradient', gradient: {shade: 'dark', type: 'horizontal', shadeIntensity: 0.5, gradientToColors: ['#7c3aed'], stops: [0, 100]}},
-    colors: ['#a855f7'],
+    fill: {type: 'gradient', gradient: {shade: 'dark', type: 'horizontal', shadeIntensity: 0.5, gradientToColors: ['#FF8C42'], stops: [0, 100]}},
+    colors: ['#FF6B35'],
     labels: ['AI Fit'],
   }), []);
 
@@ -668,7 +676,7 @@ function CompanyDashboard()
   const funnelOpts=useMemo(() => ({
     chart: {type: 'bar', toolbar: {show: false}, background: 'transparent'},
     plotOptions: {bar: {borderRadius: 4, horizontal: true, barHeight: '70%', distributed: true, isFunnel: true}},
-    colors: ['#1e40af', '#2563eb', '#0891b2', '#06b6d4', '#22d3ee'],
+    colors: ['#7A2E10', '#B8431A', '#FF6B35', '#FF8C42', '#FFB366'],
     dataLabels: {enabled: true, formatter: (v, {dataPointIndex: i}) => `${['Applied', 'Assessment', 'Interview', 'Offered', 'Hired'][i]}: ${v}`, style: {fontSize: '12px', fontFamily: 'inherit', colors: ['#fff']}, dropShadow: {enabled: false}},
     xaxis: {categories: ['Applied', 'Assessment', 'Interview', 'Offered', 'Hired'], labels: {show: false}},
     yaxis: {labels: {show: false}},
@@ -688,7 +696,7 @@ function CompanyDashboard()
     stroke: {width: 2},
     fill: {opacity: 0.2},
     markers: {size: 3, strokeWidth: 1},
-    colors: ['#3b82f6', '#a855f7'],
+    colors: ['#FF6B35', '#E5E5E5'],
     xaxis: {categories: ['React', 'Node.js', 'System Design', 'Algorithms', 'Communication']},
     yaxis: {show: false, min: 0, max: 100},
     legend: {position: 'bottom', fontSize: '11px', fontFamily: 'inherit', labels: {colors: '#a1a1aa'}, markers: {size: 8, shape: 'circle'}},
@@ -706,15 +714,15 @@ function CompanyDashboard()
   const heatOpts=useMemo(() => ({
     chart: {type: 'heatmap', toolbar: {show: false}, background: 'transparent'},
     dataLabels: {enabled: true, style: {fontSize: '12px', fontFamily: 'inherit', colors: ['#fff']}},
-    colors: ['#10b981'],
+    colors: ['#FF6B35'],
     plotOptions: {
       heatmap: {
         radius: 4, enableShades: true, shadeIntensity: 0.8, colorScale: {
           ranges: [
-            {from: 0, to: 40, color: '#374151', name: 'Low'},
-            {from: 41, to: 60, color: '#065f46', name: 'Medium'},
-            {from: 61, to: 80, color: '#059669', name: 'Good'},
-            {from: 81, to: 100, color: '#10b981', name: 'Excellent'},
+            {from: 0, to: 40, color: '#241710', name: 'Low'},
+            {from: 41, to: 60, color: '#5C2410', name: 'Medium'},
+            {from: 61, to: 80, color: '#B8431A', name: 'Good'},
+            {from: 81, to: 100, color: '#FF6B35', name: 'Excellent'},
           ]
         }
       }
@@ -740,7 +748,7 @@ function CompanyDashboard()
   const convFunnelOpts=useMemo(() => ({
     chart: {type: 'bar', toolbar: {show: false}, background: 'transparent'},
     plotOptions: {bar: {borderRadius: 6, horizontal: true, barHeight: '60%', distributed: true}},
-    colors: ['#3b82f6', '#a855f7', '#22c55e', '#eab308'],
+    colors: ['#FF6B35', '#FFB366', '#22c55e', '#eab308'],
     dataLabels: {enabled: true, style: {fontSize: '13px', fontWeight: 700, fontFamily: 'inherit', colors: ['#fff']}, formatter: (v) => v, offsetX: 8},
     xaxis: {categories: ['Applied', 'Interview', 'Offered', 'Hired'], labels: {show: false}, axisBorder: {show: false}, axisTicks: {show: false}},
     yaxis: {labels: {style: {colors: '#a1a1aa', fontSize: '12px', fontWeight: 600, fontFamily: 'inherit'}}},
@@ -758,7 +766,7 @@ function CompanyDashboard()
   const jobApplicantOpts=useMemo(() => ({
     chart: {type: 'bar', toolbar: {show: false}, background: 'transparent'},
     plotOptions: {bar: {borderRadius: 5, horizontal: true, barHeight: '55%', distributed: true}},
-    colors: ['#6366f1', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185', '#f87171'],
+    colors: ['#B8431A', '#CC5429', '#FF6B35', '#FF8049', '#FF8C42', '#FFA35C', '#FFB366', '#FFC999'],
     dataLabels: {enabled: true, style: {fontSize: '12px', fontWeight: 700, fontFamily: 'inherit', colors: ['#fff']}, offsetX: 5},
     xaxis: {categories: jobs.slice(0, 8).map(j => j.title? (j.title.length>22? j.title.substring(0, 22)+'…':j.title):'—'), labels: {show: false}, axisBorder: {show: false}, axisTicks: {show: false}},
     yaxis: {labels: {style: {colors: '#a1a1aa', fontSize: '11px', fontWeight: 500, fontFamily: 'inherit'}, maxWidth: 140}},
@@ -833,39 +841,39 @@ function CompanyDashboard()
                     {/* Active Jobs */}
                     <div className="ov-kpi-card">
                       <div className="ov-kpi-top">
-                        <div className="ov-kpi-icon" style={{background: 'rgba(59,130,246,0.12)', color: '#60a5fa'}}><Briefcase size={18} /></div>
+                        <div className="ov-kpi-icon" style={{background: 'rgba(255,107,53,0.12)', color: '#FF8C42'}}><Briefcase size={18} /></div>
                         <div className="ov-kpi-trend up"><TrendingUp size={12} /> +15%</div>
                       </div>
                       <div className="ov-kpi-value">{companyStats.activeJobs||jobs.length}</div>
                       <div className="ov-kpi-label">Active Jobs</div>
                       <div className="ov-kpi-spark">
-                        <Chart options={makeSparkOpts('#3b82f6')} series={[{data: sparkData.jobs}]} type="area" height={48} width="100%" />
+                        <Chart options={makeSparkOpts('#FF6B35')} series={[{data: sparkData.jobs}]} type="area" height={48} width="100%" />
                       </div>
                     </div>
 
                     {/* Applicants */}
                     <div className="ov-kpi-card">
                       <div className="ov-kpi-top">
-                        <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Users size={18} /></div>
+                        <div className="ov-kpi-icon" style={{background: 'rgba(255,179,102,0.12)', color: '#FFB366'}}><Users size={18} /></div>
                         <div className="ov-kpi-trend up"><TrendingUp size={12} /> +23%</div>
                       </div>
                       <div className="ov-kpi-value">{companyStats.totalApplicants}</div>
                       <div className="ov-kpi-label">Applicants</div>
                       <div className="ov-kpi-spark">
-                        <Chart options={makeSparkOpts('#a855f7')} series={[{data: sparkData.applicants}]} type="area" height={48} width="100%" />
+                        <Chart options={makeSparkOpts('#FFB366')} series={[{data: sparkData.applicants}]} type="area" height={48} width="100%" />
                       </div>
                     </div>
 
                     {/* Offered */}
                     <div className="ov-kpi-card">
                       <div className="ov-kpi-top">
-                        <div className="ov-kpi-icon" style={{background: 'rgba(20,184,166,0.12)', color: '#2dd4bf'}}><Award size={18} /></div>
+                        <div className="ov-kpi-icon" style={{background: 'rgba(255,140,66,0.12)', color: '#FF8C42'}}><Award size={18} /></div>
                         <div className="ov-kpi-trend up"><TrendingUp size={12} /> +8%</div>
                       </div>
                       <div className="ov-kpi-value">{companyStats.offered}</div>
                       <div className="ov-kpi-label">Offered</div>
                       <div className="ov-kpi-spark">
-                        <Chart options={makeSparkOpts('#14b8a6')} series={[{data: sparkData.offered}]} type="area" height={48} width="100%" />
+                        <Chart options={makeSparkOpts('#FF8C42')} series={[{data: sparkData.offered}]} type="area" height={48} width="100%" />
                       </div>
                     </div>
 
@@ -891,7 +899,7 @@ function CompanyDashboard()
                 {features['company.overview.ai_fit_score'] !== false && (
                   <div className="ov-kpi-card ov-kpi-radial">
                     <div className="ov-kpi-top">
-                      <div className="ov-kpi-icon" style={{background: 'rgba(168,85,247,0.12)', color: '#c084fc'}}><Brain size={18} /></div>
+                      <div className="ov-kpi-icon" style={{background: 'rgba(255,107,53,0.12)', color: '#FF8C42'}}><Brain size={18} /></div>
                     </div>
                     <div className="ov-kpi-label" style={{marginBottom: 4}}>Avg. AI Fit Score</div>
                     <div className="ov-kpi-radial-chart">
@@ -984,12 +992,12 @@ function CompanyDashboard()
               {features['company.overview.conversion_rates'] !== false && (
                 <div className="ov-rates-row">
                   <div className="ov-rate-card">
-                    <div className="ov-rate-icon" style={{background: 'rgba(59,130,246,0.1)', color: '#60a5fa'}}><Users size={18} /></div>
+                    <div className="ov-rate-icon" style={{background: 'rgba(255,107,53,0.1)', color: '#FF8C42'}}><Users size={18} /></div>
                     <div className="ov-rate-info">
                       <span className="ov-rate-value">{interviewRate}%</span>
                       <span className="ov-rate-label">Interview Rate</span>
                     </div>
-                    <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${interviewRate}%`, background: '#3b82f6'}} /></div>
+                    <div className="ov-rate-bar"><div className="ov-rate-fill" style={{width: `${interviewRate}%`, background: '#FF6B35'}} /></div>
                   </div>
                   <div className="ov-rate-card">
                     <div className="ov-rate-icon" style={{background: 'rgba(34,197,94,0.1)', color: '#4ade80'}}><Award size={18} /></div>
@@ -1374,7 +1382,7 @@ function CompanyDashboard()
                                       <Video size={14} />
                                     </button>
                                   )}
-                                  {c.status==='interview'&&<span className="ats-scheduled-tag">📅 Scheduled</span>}
+                                  {c.status==='interview'&&<span className="ats-scheduled-tag">Scheduled</span>}
                                 </div>
                               </td>
                             </tr>
@@ -1495,7 +1503,7 @@ function CompanyDashboard()
                                     <Video size={14} />
                                   </button>
                                 )}
-                                {c.status==='interview'&&<span className="ats-scheduled-tag">📅</span>}
+                                {c.status==='interview'&&<span className="ats-scheduled-tag" title="Scheduled" style={{display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#FF6B35'}} />}
                               </div>
                             </div>
                           </div>
@@ -1540,9 +1548,9 @@ function CompanyDashboard()
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px'}}>
                       {[1, 2, 3].map(s => (
                         <div key={s} style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
-                          <div style={{width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, background: wizardStep>=s? '#6366f1':'var(--bg-primary, #0f0f1a)', color: wizardStep>=s? '#fff':'#64748b', border: `2px solid ${wizardStep>=s? '#6366f1':'#334155'}`, transition: 'all 0.3s'}}>{wizardStep>s? '✓':s}</div>
+                          <div style={{width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, background: wizardStep>=s? '#FF6B35':'var(--bg-primary, #0f0f1a)', color: wizardStep>=s? '#fff':'#64748b', border: `2px solid ${wizardStep>=s? '#FF6B35':'#334155'}`, transition: 'all 0.3s'}}>{wizardStep>s? '✓':s}</div>
                           <span style={{fontSize: '0.78rem', color: wizardStep===s? '#e2e8f0':'#64748b', fontWeight: wizardStep===s? 600:400}}>{s===1? 'Details':s===2? 'Questions':'Review'}</span>
-                          {s<3&&<div style={{width: '30px', height: '2px', background: wizardStep>s? '#6366f1':'#334155', borderRadius: '1px'}} />}
+                          {s<3&&<div style={{width: '30px', height: '2px', background: wizardStep>s? '#FF6B35':'#334155', borderRadius: '1px'}} />}
                         </div>
                       ))}
                     </div>
@@ -1558,7 +1566,7 @@ function CompanyDashboard()
                     {/* ─── Step 1: Quiz Details ─── */}
                     {wizardStep===1&&(
                       <>
-                        <h2 style={{margin: '0 0 18px', fontSize: '1.25rem'}}>📝 Quiz Details</h2>
+                        <h2 style={{margin: '0 0 18px', fontSize: '1.25rem'}}>Quiz Details</h2>
                         <div style={{display: 'flex', flexDirection: 'column', gap: '14px'}}>
                           <div>
                             <label style={{fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: '4px'}}>Title *</label>
@@ -1603,27 +1611,27 @@ function CompanyDashboard()
                     {/* ─── Step 2: Generate / Add Questions ─── */}
                     {wizardStep===2&&(
                       <>
-                        <h2 style={{margin: '0 0 6px', fontSize: '1.25rem'}}>🧠 Add Questions</h2>
+                        <h2 style={{margin: '0 0 6px', fontSize: '1.25rem'}}>Add Questions</h2>
                         <p style={{color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 20px'}}>Choose how to add questions to your quiz</p>
 
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
                           {/* AI Generate Card */}
                           <div
                             onClick={!generatingAI? handleAIGenerate:undefined}
-                            style={{background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))', border: '2px solid rgba(99,102,241,0.3)', borderRadius: '14px', padding: '24px', cursor: generatingAI? 'wait':'pointer', textAlign: 'center', transition: 'all 0.2s'}}
-                            onMouseEnter={e => {if (!generatingAI) e.currentTarget.style.borderColor='#6366f1';}}
-                            onMouseLeave={e => e.currentTarget.style.borderColor='rgba(99,102,241,0.3)'}
+                            style={{background: 'linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,140,66,0.1))', border: '2px solid rgba(255,107,53,0.3)', borderRadius: '14px', padding: '24px', cursor: generatingAI? 'wait':'pointer', textAlign: 'center', transition: 'all 0.2s'}}
+                            onMouseEnter={e => {if (!generatingAI) e.currentTarget.style.borderColor='#FF6B35';}}
+                            onMouseLeave={e => e.currentTarget.style.borderColor='rgba(255,107,53,0.3)'}
                           >
                             {generatingAI? (
                               <>
-                                <Loader size={36} style={{color: '#818cf8', marginBottom: '12px', animation: 'spin 1s linear infinite'}} />
-                                <h3 style={{fontSize: '1rem', margin: '0 0 6px', color: '#c4b5fd'}}>AI is thinking...</h3>
+                                <Loader size={36} style={{color: '#FF8C42', marginBottom: '12px', animation: 'spin 1s linear infinite'}} />
+                                <h3 style={{fontSize: '1rem', margin: '0 0 6px', color: '#FFB366'}}>AI is thinking...</h3>
                                 <p style={{fontSize: '0.8rem', color: '#94a3b8', margin: 0}}>Generating {quizForm.questionCount} {quizForm.difficulty} questions about {quizForm.topic}</p>
                               </>
                             ):(
                               <>
-                                <Sparkles size={36} style={{color: '#818cf8', marginBottom: '12px'}} />
-                                <h3 style={{fontSize: '1rem', margin: '0 0 6px'}}>✨ Generate with AI</h3>
+                                <Sparkles size={36} style={{color: '#FF8C42', marginBottom: '12px'}} />
+                                <h3 style={{fontSize: '1rem', margin: '0 0 6px'}}>Generate with AI</h3>
                                 <p style={{fontSize: '0.8rem', color: '#94a3b8', margin: 0}}>{quizForm.questionCount} MCQ questions about "{quizForm.topic}" • {quizForm.difficulty}</p>
                               </>
                             )}
@@ -1633,7 +1641,7 @@ function CompanyDashboard()
                           <div
                             onClick={() => {resetQuizWizard(); navigate('/quiz/dashboard');}}
                             style={{background: 'var(--bg-primary, #0f0f1a)', border: '2px solid var(--border-color, #2a2a3a)', borderRadius: '14px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'}}
-                            onMouseEnter={e => e.currentTarget.style.borderColor='#6366f1'}
+                            onMouseEnter={e => e.currentTarget.style.borderColor='#FF6B35'}
                             onMouseLeave={e => e.currentTarget.style.borderColor='var(--border-color, #2a2a3a)'}
                           >
                             <FileText size={36} style={{color: '#64748b', marginBottom: '12px'}} />
@@ -1653,7 +1661,7 @@ function CompanyDashboard()
                       <>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
                           <div>
-                            <h2 style={{margin: '0 0 4px', fontSize: '1.25rem'}}>✅ Review Questions ({generatedQuestions.length})</h2>
+                            <h2 style={{margin: '0 0 4px', fontSize: '1.25rem'}}>Review Questions ({generatedQuestions.length})</h2>
                             <p style={{color: '#94a3b8', fontSize: '0.82rem', margin: 0}}>Review, remove unwanted questions, or generate more</p>
                           </div>
                           <button
@@ -1684,7 +1692,7 @@ function CompanyDashboard()
                                   ))}
                                 </div>
                               )}
-                              {q.explanation&&<p style={{fontSize: '0.75rem', color: '#64748b', margin: '8px 0 0 28px', fontStyle: 'italic'}}>💡 {q.explanation}</p>}
+                              {q.explanation&&<p style={{fontSize: '0.75rem', color: '#64748b', margin: '8px 0 0 28px', fontStyle: 'italic'}}>{q.explanation}</p>}
                             </div>
                           ))}
                         </div>
@@ -1727,7 +1735,7 @@ function CompanyDashboard()
                       <span><Timer size={13} /> {q.questionTimeLimit}s/Q</span>
                       <span><Users size={13} /> {q.participantCount} joined</span>
                     </div>
-                    <div style={{fontSize: '0.78rem', color: '#818cf8', fontFamily: 'monospace', margin: '6px 0'}}>Room: {q.code}</div>
+                    <div style={{fontSize: '0.78rem', color: '#FFB366', fontFamily: 'monospace', margin: '6px 0'}}>Room: {q.code}</div>
                     <div className="cmpd-quiz-actions">
                       {q.status==='draft'&&(
                         <>
@@ -1798,7 +1806,7 @@ function CompanyDashboard()
                     {/* ─── Step 1: Contest Details ─── */}
                     {contestWizardStep===1&&(
                       <>
-                        <h2 style={{margin: '0 0 18px', fontSize: '1.25rem'}}>💻 Contest Details</h2>
+                        <h2 style={{margin: '0 0 18px', fontSize: '1.25rem'}}>Contest Details</h2>
                         <div style={{display: 'flex', flexDirection: 'column', gap: '14px'}}>
                           <div>
                             <label style={{fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: '4px'}}>Title *</label>
@@ -1843,7 +1851,7 @@ function CompanyDashboard()
                     {/* ─── Step 2: Generate / Add Challenges ─── */}
                     {contestWizardStep===2&&(
                       <>
-                        <h2 style={{margin: '0 0 6px', fontSize: '1.25rem'}}>🧠 Add Challenges</h2>
+                        <h2 style={{margin: '0 0 6px', fontSize: '1.25rem'}}>Add Challenges</h2>
                         <p style={{color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 20px'}}>Choose how to add coding challenges to your contest</p>
 
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
@@ -1863,7 +1871,7 @@ function CompanyDashboard()
                             ):(
                               <>
                                 <Sparkles size={36} style={{color: '#10b981', marginBottom: '12px'}} />
-                                <h3 style={{fontSize: '1rem', margin: '0 0 6px'}}>✨ Generate with AI</h3>
+                                <h3 style={{fontSize: '1rem', margin: '0 0 6px'}}>Generate with AI</h3>
                                 <p style={{fontSize: '0.8rem', color: '#94a3b8', margin: 0}}>{contestForm.challengeCount} coding challenges about "{contestForm.topic}" • {contestForm.difficulty}</p>
                               </>
                             )}
@@ -1893,7 +1901,7 @@ function CompanyDashboard()
                       <>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
                           <div>
-                            <h2 style={{margin: '0 0 4px', fontSize: '1.25rem'}}>✅ Review Challenges ({generatedChallenges.length})</h2>
+                            <h2 style={{margin: '0 0 4px', fontSize: '1.25rem'}}>Review Challenges ({generatedChallenges.length})</h2>
                             <p style={{color: '#94a3b8', fontSize: '0.82rem', margin: 0}}>Review, remove unwanted challenges, or generate more</p>
                           </div>
                           <button
@@ -1920,8 +1928,8 @@ function CompanyDashboard()
                               </div>
                               <div style={{display: 'flex', gap: '12px', marginTop: '10px', marginLeft: '24px', fontSize: '0.75rem', color: '#64748b'}}>
                                 <span style={{color: c.difficulty==='easy'? '#22c55e':c.difficulty==='hard'? '#ef4444':'#f59e0b'}}>● {c.difficulty}</span>
-                                <span>📊 {c.points||100} pts</span>
-                                <span>🧪 {c.testCases?.length||0} test cases</span>
+                                <span>{c.points||100} pts</span>
+                                <span>{c.testCases?.length||0} test cases</span>
                               </div>
                             </div>
                           ))}
@@ -2361,6 +2369,68 @@ function CompanyDashboard()
                     <span key={i} className="ats-skill-tag neutral">{s}</span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Resume Parsed Data */}
+            {selectedCandidate.resumeParsed&&(
+              <div className="ats-resume-parsed-section">
+                <h4><FileText size={15} /> Resume Parsed</h4>
+
+                {/* Extracted Skills */}
+                {selectedCandidate.resumeParsed.skills?.all?.length>0&&(
+                  <div className="ats-rp-block">
+                    <div className="ats-rp-label">Extracted Skills</div>
+                    <div className="ats-skills-tags">
+                      {selectedCandidate.resumeParsed.skills.all.map((s, i) => (
+                        <span key={i} className="ats-skill-tag neutral">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Experience */}
+                {selectedCandidate.resumeParsed.experience&&(
+                  <div className="ats-rp-row">
+                    <div className="ats-rp-block">
+                      <div className="ats-rp-label">Experience</div>
+                      <div className="ats-rp-value">{selectedCandidate.resumeParsed.experience.years??selectedCandidate.experienceYears??0} years</div>
+                    </div>
+                    {selectedCandidate.resumeParsed.experience.level&&(
+                      <div className="ats-rp-block">
+                        <div className="ats-rp-label">Level</div>
+                        <div className="ats-rp-value ats-rp-capitalize">{selectedCandidate.resumeParsed.experience.level}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Education */}
+                {selectedCandidate.resumeParsed.education&&(
+                  <div className="ats-rp-block">
+                    <div className="ats-rp-label">Education</div>
+                    <div className="ats-rp-edu-list">
+                      {selectedCandidate.resumeParsed.education.degrees?.length>0
+                        ? selectedCandidate.resumeParsed.education.degrees.map((d, i) => (
+                            <span key={i} className="ats-rp-edu-tag">{d}</span>
+                          ))
+                        : <span className="ats-no-data">No degree info extracted</span>
+                      }
+                      {selectedCandidate.resumeParsed.education.cgpa>0&&(
+                        <span className="ats-rp-edu-tag cgpa">CGPA {selectedCandidate.resumeParsed.education.cgpa.toFixed(2)}</span>
+                      )}
+                      {selectedCandidate.resumeParsed.education.institutions?.map((inst, i) => (
+                        <span key={`inst-${i}`} className="ats-rp-edu-tag inst">{inst}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {!selectedCandidate.resumeParsed&&(
+              <div className="ats-resume-parsed-empty">
+                <FileText size={16} />
+                <span>No resume was uploaded — ATS scored from profile data only</span>
               </div>
             )}
           </div>

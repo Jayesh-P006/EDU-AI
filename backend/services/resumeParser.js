@@ -278,15 +278,15 @@ function extractCandidateInfo(text)
 {
   const info={name: '', email: '', phone: '', linkedin: '', github: '', portfolio: ''};
 
-  // Name: first non-empty line (heuristic)
+  // Name: first non-empty line that doesn't look like a URL/email/phone
   const lines=text.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length>0)
   {
     const firstLine=lines[0];
-    // If first line doesn't look like email/phone/url, it's likely the name
     if (!firstLine.includes('@')&&!firstLine.match(/^\+?\d/)&&!firstLine.match(/^http/i))
     {
-      info.name=firstLine;
+      // Strip label prefixes like "Name:", "Name :" that some PDF templates add
+      info.name=firstLine.replace(/^(?:name|candidate|applicant)\s*[:\|–\-]\s*/i, '').trim();
     }
   }
 
@@ -298,17 +298,20 @@ function extractCandidateInfo(text)
   const phoneMatch=text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
   if (phoneMatch) info.phone=phoneMatch[0];
 
-  // LinkedIn
-  const linkedinMatch=text.match(/(?:linkedin\.com\/in\/|linkedin:\s*)([\w-]+)/i);
-  if (linkedinMatch) info.linkedin=`linkedin.com/in/${linkedinMatch[1]}`;
+  // LinkedIn — must be a proper URL (visible text or PDF annotation)
+  const linkedinUrl=text.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([\w-]+)\/?/i);
+  if (linkedinUrl) info.linkedin=`linkedin.com/in/${linkedinUrl[1]}`;
 
-  // GitHub
-  const githubMatch=text.match(/(?:github\.com\/|github:\s*)([\w-]+)/i);
-  if (githubMatch) info.github=`github.com/${githubMatch[1]}`;
+  // GitHub — must be a proper URL (visible text or PDF annotation)
+  const githubUrl=text.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([\w-]+)\/?/i);
+  if (githubUrl) info.github=`github.com/${githubUrl[1]}`;
 
-  // Portfolio
-  const portfolioMatch=text.match(/(?:portfolio|website|site)[\s:]*(?:https?:\/\/)?([^\s]+)/i);
-  if (portfolioMatch) info.portfolio=portfolioMatch[1];
+  // Portfolio — first https:// URL that is not linkedin, github, or cloud storage
+  const allHttpUrls=text.match(/https?:\/\/[^\s,;'"()\[\]<>]+/gi)||[];
+  const portfolioUrl=allHttpUrls.find(
+    u => !/linkedin\.com|github\.com|d\.docs\.live\.net|onedrive|sharepoint|dropbox/i.test(u)
+  );
+  if (portfolioUrl) info.portfolio=portfolioUrl;
 
   return info;
 }

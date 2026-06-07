@@ -4,7 +4,7 @@ import {AnimatePresence, motion} from 'framer-motion';
 import Webcam from 'react-webcam';
 import {Shield, Lock, ScanFace, Loader2, GraduationCap, Building2, UserCheck} from 'lucide-react';
 import ScannerOverlay from '../components/ScannerOverlay';
-import {loadFaceModels, extractDescriptor} from '../services/faceRecognition';
+import {loadFaceModels, extractDescriptor, countFaces} from '../services/faceRecognition';
 import {authService} from '../services/authService';
 import api from '../services/api';
 import './Login.css';
@@ -18,7 +18,9 @@ function Login()
   const [error, setError]=useState('');
   const [scanStatus, setScanStatus]=useState('idle'); // idle | loading-models | scanning | success | error
   const [modelsReady, setModelsReady]=useState(false);
+  const [faceCount, setFaceCount]=useState(0);
   const webcamRef=useRef(null);
+  const liveDetectRef=useRef(null);
   const navigate=useNavigate();
   const [demoSeeded, setDemoSeeded]=useState(false);
 
@@ -43,12 +45,32 @@ function Login()
           setModelsReady(true);
           setScanStatus('idle');
         })
-        .catch((err) =>
+        .catch(() =>
         {
           setError('Failed to load face recognition models. Please refresh.');
           setScanStatus('error');
         });
     }
+  }, [mode, modelsReady]);
+
+  // Live face count — runs every 800 ms while biometric tab is open and models are ready
+  useEffect(() =>
+  {
+    if (mode!=='biometric'||!modelsReady) return;
+
+    liveDetectRef.current=setInterval(async () =>
+    {
+      const video=webcamRef.current?.video;
+      if (!video||video.readyState!==4) return;
+      const count=await countFaces(video);
+      setFaceCount(count);
+    }, 800);
+
+    return () =>
+    {
+      clearInterval(liveDetectRef.current);
+      setFaceCount(0);
+    };
   }, [mode, modelsReady]);
 
   const getDashboardPath=(role) =>
@@ -87,6 +109,24 @@ function Login()
   {
     if (!webcamRef.current||!modelsReady) return;
     setError('');
+
+    // Hard check at scan time — live count can lag by up to 800 ms
+    const video=webcamRef.current.video;
+    if (video&&video.readyState===4)
+    {
+      const live=await countFaces(video);
+      if (live===0)
+      {
+        setError('No face detected. Position your face in the frame.');
+        return;
+      }
+      if (live>1)
+      {
+        setError('Multiple faces detected. Only one person may be present during login.');
+        return;
+      }
+    }
+
     setScanStatus('scanning');
 
     const imageSrc=webcamRef.current.getScreenshot();
@@ -264,10 +304,19 @@ function Login()
                   />
                 </div>
 
+                {/* Live face count indicator */}
+                {modelsReady&&scanStatus==='idle'&&(
+                  <div className={`face-live-status ${faceCount===1? 'face-live-ok':faceCount>1? 'face-live-warn':'face-live-none'}`}>
+                    {faceCount===0&&'No face detected — position yourself in frame'}
+                    {faceCount===1&&'Face detected — ready to scan'}
+                    {faceCount>1&&`${faceCount} faces detected — only one person allowed`}
+                  </div>
+                )}
+
                 <button
                   className="login-submit-btn"
                   onClick={handleFaceLogin}
-                  disabled={!modelsReady||scanStatus==='scanning'||scanStatus==='success'}
+                  disabled={!modelsReady||scanStatus==='scanning'||scanStatus==='success'||(modelsReady&&scanStatus==='idle'&&faceCount!==1)}
                 >
                   {scanStatus==='loading-models'? (
                     <>

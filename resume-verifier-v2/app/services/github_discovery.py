@@ -11,21 +11,26 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-# Matches https://github.com/owner/repo with optional .git suffix.
+# Matches github.com/owner/repo with optional scheme/www, optional .git suffix,
+# and an optional trailing slash. The scheme is OPTIONAL because resumes very
+# commonly write bare "github.com/owner/repo" without "https://".
+# A negative lookbehind keeps us from matching mid-word (e.g. "notgithub.com/...").
 # Uses a LOOKAHEAD so the terminator is not consumed (avoids swallowing \n
 # between URLs and prevents profile-URL shadow-matches from eating repo paths).
 # re.MULTILINE makes $ match end-of-line, not just end-of-string.
 _REPO_RE = re.compile(
-    r'https?://(?:www\.)?github\.com'
+    r'(?<![\w./-])'                            # don't start mid-word/mid-path
+    r'(?:https?://)?(?:www\.)?github\.com'
     r'/([A-Za-z0-9][A-Za-z0-9._-]*)'        # owner (greedy — stops at /)
     r'/([A-Za-z0-9_][A-Za-z0-9._-]*?)'       # repo  (non-greedy)
-    r'(?:\.git)?'                              # optional .git suffix (consumed, not captured)
-    r'(?=[\s,;)\'"<>\[\]#?\\|]|$)',           # lookahead boundary — NOT consumed
+    r'(?:\.git)?/?'                            # optional .git suffix and/or trailing slash
+    r'(?=[\s,;)\'"<>\[\]#?\\|/]|$)',          # lookahead boundary — NOT consumed
     re.IGNORECASE | re.MULTILINE,
 )
 
 # Matches github.com/user — used only for profile-API fallback
 _PROFILE_RE = re.compile(
+    r'(?<![\w./-])'
     r'(?:https?://)?(?:www\.)?github\.com/([A-Za-z0-9][A-Za-z0-9._-]{0,37})'
     r'(?=[\s,;)\'"<>\[\]/]|$)',
     re.IGNORECASE | re.MULTILINE,

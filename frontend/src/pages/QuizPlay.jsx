@@ -546,9 +546,9 @@ export default function QuizPlay()
                             {/* Answer result */}
                             {answered&&ansResult&&(
                                 <div className={`qp-inline-result ${ansResult.correct? 'correct':'wrong'}`}>
-                                    <span>{ansResult.correct? '✅ Correct!':'❌ Wrong!'}</span>
+                                    <span>{ansResult.correct? 'Correct!':'Wrong!'}</span>
                                     {ansResult.correct&&<span className="qp-pts-badge">+{ansResult.pointsEarned} pts</span>}
-                                    {ansResult.streak>=3&&<span className="qp-streak-badge">🔥 {ansResult.streak}x streak!</span>}
+                                    {ansResult.streak>=3&&<span className="qp-streak-badge">{ansResult.streak}x streak!</span>}
                                     {ansResult.explanation&&<p className="qp-explanation">{ansResult.explanation}</p>}
                                 </div>
                             )}
@@ -565,7 +565,7 @@ export default function QuizPlay()
                                         onClick={handleSubmit}
                                         disabled={submitting||(currentQ.type==='mcq'? !selectedAnswer:!shortAnswer.trim())}
                                     >
-                                        {submitting? '⏳ Submitting…':'✅ Submit'}
+                                        {submitting? 'Submitting…':'Submit'}
                                     </button>
                                 )}
 
@@ -580,7 +580,7 @@ export default function QuizPlay()
             case 'completed':
                 return (
                     <div className="qp-center-content">
-                        <div className="qp-result-icon correct">🎉</div>
+                        <div className="qp-result-icon correct"><span style={{display: 'inline-block', width: '56px', height: '56px', borderRadius: '50%', border: '4px solid #22c55e'}} /></div>
                         <h2 className="qp-ended-title">All Questions Answered!</h2>
                         <p className="qp-sub">Waiting for the quiz to end…</p>
                         <div className="qp-score-summary">
@@ -612,7 +612,7 @@ export default function QuizPlay()
                     return (
                         <div className="qp-center-content">
                             <div className="qp-ended-icon">
-                                {myPos===0? '🏆':myPos===1? '🥈':myPos===2? '🥉':'🎉'}
+                                {myPos>=0&&myPos<3? `#${myPos+1}`:'Done'}
                             </div>
                             <h2 className="qp-ended-title">Quiz Complete!</h2>
                             {me&&(
@@ -631,7 +631,7 @@ export default function QuizPlay()
                                 {(endData?.leaderboard||[]).slice(0, 10).map((p, i) => (
                                     <div className={`qp-lb-row${p.name===playerName? ' me':''}`} key={i}>
                                         <span className="qp-lb-rank">
-                                            {i===0? '🥇':i===1? '🥈':i===2? '🥉':`#${p.rank}`}
+                                            {i<3? `#${i+1}`:`#${p.rank}`}
                                         </span>
                                         <span className="qp-lb-name">{p.name}{p.name===playerName? ' (You)':''}</span>
                                         <span className="qp-lb-score">{p.score} pts</span>

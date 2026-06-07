@@ -469,7 +469,7 @@ export default function AdminScoring()
             <div className="ascr-leaderboard">
               <div className="ascr-lb-header">
                 <h2><Trophy size={22} /> Leaderboard — {roles.find(r => r.id===selectedRole)?.label}</h2>
-                <div className="ascr-lb-badge">{config.liveEnabled? '🟢 Live':'⚪ Static'}</div>
+                <div className="ascr-lb-badge">{config.liveEnabled? 'Live':'Static'}</div>
               </div>
 
               {/* Top 3 podium */}
@@ -481,7 +481,7 @@ export default function AdminScoring()
                     if (!c) return null;
                     return (
                       <div className={`ascr-podium-card podium-${idx+1}`} key={c.rank}>
-                        <div className="ascr-podium-rank">{['🥇', '🥈', '🥉'][idx]}</div>
+                        <div className="ascr-podium-rank">{['#1', '#2', '#3'][idx]}</div>
                         <div className="ascr-podium-avatar">{c.name.charAt(0)}</div>
                         <strong>{c.name}</strong>
                         <span className="ascr-podium-score">{c.overall}</span>

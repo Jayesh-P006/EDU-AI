@@ -158,7 +158,7 @@ export default function QuizHost()
             {/* Header */}
             <header className="qh-header">
                 <div className="qh-header-left">
-                    <span className="qh-logo">🎯</span>
+                    <span className="qh-logo" style={{display: 'inline-block', width: '20px', height: '20px', borderRadius: '50%', border: '3px solid currentColor'}} />
                     <div>
                         <div className="qh-quiz-title">{quiz?.title||'Quiz'}</div>
                         <div className="qh-quiz-meta">Code: <strong className="qh-code">{quiz?.code}</strong>{quiz?.topic&&<> · {quiz.topic}</>}</div>
@@ -171,9 +171,9 @@ export default function QuizHost()
                         </div>
                     )}
                     <span className={`qh-phase-badge qh-phase-${phase}`}>{
-                        phase==='waiting'? '⏳ Waiting':
-                            phase==='active'? '🟢 Live (Self-Paced)':
-                                phase==='ended'? '🏁 Ended':phase
+                        phase==='waiting'? 'Waiting':
+                            phase==='active'? 'Live (Self-Paced)':
+                                phase==='ended'? 'Ended':phase
                     }</span>
                     {['active', 'waiting'].includes(phase)&&(
                         <button className="qh-btn-danger" onClick={handleEnd}>End Quiz</button>
@@ -252,7 +252,7 @@ export default function QuizHost()
                                     ? <p className="qh-sub">No answers yet…</p>
                                     :leaderboard.slice(0, 15).map((p, i) => (
                                         <div className="qh-lb-row" key={i}>
-                                            <span className="qh-lb-rank">{i===0? '🥇':i===1? '🥈':i===2? '🥉':`#${p.rank}`}</span>
+                                            <span className="qh-lb-rank">{i<3? `#${i+1}`:`#${p.rank}`}</span>
                                             <span className="qh-lb-name">{p.name}</span>
                                             <span className="qh-lb-score">{p.score} pts</span>
                                             <span className="qh-lb-answers">{p.answers}/{totalQ}</span>
@@ -283,7 +283,7 @@ export default function QuizHost()
                                                 </div>
                                                 <span className="qh-prog-count">{p.answeredCount}/{totalQ}</span>
                                                 <span className="qh-prog-score">{p.score} pts</span>
-                                                {done&&<span className="qh-prog-done">✅</span>}
+                                                {done&&<span className="qh-prog-done">✓</span>}
                                                 {p.violations>0&&(
                                                     <span className="qh-prog-integrity" style={{color: p.integrityScore>60? '#f59e0b':'#ef4444'}} title={`${p.violations} violations, -${p.totalPenalty} pts penalty`}>
                                                         ⚠ {p.integrityScore}%
@@ -303,7 +303,7 @@ export default function QuizHost()
             {phase==='ended'&&(
                 <div className="qh-body qh-ended">
                     <div className="qh-ended-card">
-                        <h2>🏁 Quiz Complete!</h2>
+                        <h2>Quiz Complete!</h2>
                         {endStats&&(
                             <div className="qh-stats-row">
                                 <div className="qh-stat">
@@ -323,7 +323,7 @@ export default function QuizHost()
                         <div className="qh-podium">
                             {leaderboard.slice(0, 3).map((p, i) => (
                                 <div className={`qh-podium-place p${i+1}`} key={i}>
-                                    <div className="qh-podium-medal">{i===0? '🥇':i===1? '🥈':'🥉'}</div>
+                                    <div className="qh-podium-medal">#{i+1}</div>
                                     <div className="qh-podium-name">{p.name}</div>
                                     <div className="qh-podium-score">{p.score} pts</div>
                                 </div>
@@ -340,7 +340,7 @@ export default function QuizHost()
                             ))}
                         </div>
                         <div className="qh-ended-actions">
-                            <button className="qh-btn-next" onClick={() => navigate(`/quiz/results/${quizId}`)}>📊 Full Results</button>
+                            <button className="qh-btn-next" onClick={() => navigate(`/quiz/results/${quizId}`)}>Full Results</button>
                             <button className="qh-btn-secondary" onClick={() => navigate('/quiz/dashboard')}>‹ Dashboard</button>
                         </div>
                     </div>

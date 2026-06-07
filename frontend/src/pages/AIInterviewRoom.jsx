@@ -346,7 +346,7 @@ function AIInterviewRoom()
             {conversation.map((msg, index) => (
               <div key={index} className={`message ${msg.role}`}>
                 <div className="message-label">
-                  {msg.role==='assistant'? '🤖 AI Interviewer':'👤 You'}
+                  {msg.role==='assistant'? 'AI Interviewer':'You'}
                 </div>
                 <div className="message-content">{msg.content}</div>
               </div>
@@ -366,7 +366,7 @@ function AIInterviewRoom()
                 title={isSpeaking? 'Speaking...':'Replay question'}
                 type="button"
               >
-                {isSpeaking? '🔊':'🔈'}
+                {isSpeaking? 'Speaking':'Replay'}
               </button>
             )}
           </div>
@@ -376,7 +376,7 @@ function AIInterviewRoom()
               <textarea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
-                placeholder={isRecording? '🎙️ Listening... speak now':'Type your answer or click the mic to speak...'}
+                placeholder={isRecording? 'Listening... speak now':'Type your answer or click the mic to speak...'}
                 rows="6"
                 disabled={submitting}
                 className={isRecording? 'recording':''}
@@ -390,9 +390,9 @@ function AIInterviewRoom()
                   title={isRecording? 'Stop recording':'Start voice recording'}
                 >
                   {isRecording? (
-                    <span className="mic-icon recording-icon">⏹️</span>
+                    <span className="mic-icon recording-icon">Stop</span>
                   ):(
-                    <span className="mic-icon">🎙️</span>
+                    <span className="mic-icon">Mic</span>
                   )}
                 </button>
               )}
