@@ -16,6 +16,7 @@ class AnalysisState(TypedDict):
     repo_path: str          # path to repo root inside temp dir
     temp_dir: str           # parent temp dir — cleaned up by worker
     default_branch: str
+    commit_count: Optional[int]
 
     # Node 3 output: repo scan
     repo_metadata: dict[str, Any]

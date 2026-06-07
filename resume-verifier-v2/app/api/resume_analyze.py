@@ -339,9 +339,16 @@ async def get_group_status(
             )
             meta = meta_row.scalar_one_or_none()
             if meta:
-                languages = meta.languages or {}
+                raw_langs = meta.languages or {}
+                # Normalize: DB stores {lang: {files, percentage}} — UI wants {lang: number}
+                languages = {
+                    k: (v["percentage"] if isinstance(v, dict) else v)
+                    for k, v in raw_langs.items()
+                }
                 technologies = meta.frameworks or []
                 files = meta.file_count or None
+                lines_of_code = meta.lines_of_code or None
+                commit_count = meta.commit_count
 
         project_statuses.append(ProjectStatus(
             analysisId=str(job.id),

@@ -59,6 +59,8 @@ class RepositoryMetadata(Base):
     file_count: Mapped[int] = mapped_column(Integer, default=0)
     folder_count: Mapped[int] = mapped_column(Integer, default=0)
     total_size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    lines_of_code: Mapped[int] = mapped_column(Integer, default=0)
+    commit_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     languages: Mapped[dict] = mapped_column(JSON, default=dict)
     frameworks: Mapped[list] = mapped_column(JSON, default=list)
     dependencies: Mapped[dict] = mapped_column(JSON, default=dict)

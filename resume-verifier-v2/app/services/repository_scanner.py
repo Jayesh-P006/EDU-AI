@@ -68,6 +68,7 @@ class RepositoryScanner:
         file_count = 0
         folder_count = 0
         total_size = 0
+        lines_of_code = 0
         dependencies: dict[str, list[str]] = {}
         frameworks: set[str] = set()
         maturity_indicators: list[str] = []
@@ -115,6 +116,12 @@ class RepositoryScanner:
                 lang = LANGUAGE_EXTENSIONS.get(ext)
                 if lang:
                     lang_counts[lang] = lang_counts.get(lang, 0) + 1
+                    # Count lines for source code files (skip large binaries / data files)
+                    if ext not in (".json", ".yaml", ".yml", ".md", ".toml") and entry.stat().st_size < 500_000:
+                        try:
+                            lines_of_code += entry.read_text(encoding="utf-8", errors="ignore").count("\n")
+                        except Exception:
+                            pass
 
                 # Dependency files
                 if fname == "package.json":
@@ -182,6 +189,7 @@ class RepositoryScanner:
             "fileCount": file_count,
             "folderCount": folder_count,
             "totalSizeBytes": total_size,
+            "linesOfCode": lines_of_code,
             "languages": lang_stats,
             "frameworks": sorted_frameworks,
             "dependencies": dependencies,

@@ -141,6 +141,8 @@ def run_analysis(self, analysis_id: str) -> dict:
                     file_count=repo_meta_data.get("fileCount", 0),
                     folder_count=repo_meta_data.get("folderCount", 0),
                     total_size_bytes=repo_meta_data.get("totalSizeBytes", 0),
+                    lines_of_code=repo_meta_data.get("linesOfCode", 0),
+                    commit_count=final_state.get("commit_count"),
                     languages=repo_meta_data.get("languages", {}),
                     frameworks=repo_meta_data.get("frameworks", []),
                     dependencies=repo_meta_data.get("dependencies", {}),

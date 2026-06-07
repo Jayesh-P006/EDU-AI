@@ -189,20 +189,23 @@ function EvidenceDrawer({ project, onClose }) {
             <div className="mpd-drawer-section">
               <h3 className="mpd-drawer-section-title">Languages</h3>
               <div className="mpd-lang-list">
-                {Object.entries(project.languages || {}).map(([lang, pct]) => (
-                  <div key={lang} className="mpd-lang-row">
-                    <span className="mpd-lang-name">{lang}</span>
-                    <div className="mpd-lang-bar-bg">
-                      <motion.div
-                        className="mpd-lang-bar-fill"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.7 }}
-                      />
+                {Object.entries(project.languages || {}).map(([lang, pct]) => {
+                  const pctVal = typeof pct === 'object' ? (pct?.percentage ?? 0) : (pct ?? 0);
+                  return (
+                    <div key={lang} className="mpd-lang-row">
+                      <span className="mpd-lang-name">{lang}</span>
+                      <div className="mpd-lang-bar-bg">
+                        <motion.div
+                          className="mpd-lang-bar-fill"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pctVal}%` }}
+                          transition={{ duration: 0.7 }}
+                        />
+                      </div>
+                      <span className="mpd-lang-pct">{pctVal}%</span>
                     </div>
-                    <span className="mpd-lang-pct">{pct}%</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -548,11 +551,22 @@ export default function MultiProjectDashboard() {
         <aside className="mpd-sidebar">
           {/* Overall Score */}
           <motion.div className="mpd-sidebar-card mpd-score-card" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="mpd-sidebar-card-title">Candidate Trust Score</h3>
+            <h3 className="mpd-sidebar-card-title mpd-score-card-title">CANDIDATE TRUST SCORE</h3>
             <div className="mpd-overall-score-ring">
-              <ScoreRing score={d.overallTrustScore} size={120} strokeWidth={9} />
+              {d.overallTrustScore == null ? (
+                <div className="mpd-trust-computing-ring">
+                  <svg width={120} height={120} viewBox="0 0 120 120">
+                    <circle cx={60} cy={60} r={51} fill="none" stroke="var(--bg-tertiary)" strokeWidth={9} />
+                  </svg>
+                  <div className="mpd-trust-computing-inner">
+                    <Loader size={28} className="mpd-ring-spin" color="var(--text-tertiary)" />
+                  </div>
+                </div>
+              ) : (
+                <ScoreRing score={d.overallTrustScore} size={120} strokeWidth={9} />
+              )}
             </div>
-            <div className="mpd-score-grade" style={{ color: trustColor }}>
+            <div className="mpd-score-grade" style={{ color: d.overallTrustScore != null ? trustColor : 'var(--text-secondary)' }}>
               {d.overallTrustScore != null ? getTrustScoreLabel(d.overallTrustScore) : 'Computing...'}
             </div>
             {d.recommendation && (
