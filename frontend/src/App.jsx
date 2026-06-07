@@ -18,6 +18,14 @@ import AIInterviewSetup from './pages/AIInterviewSetup'
 import AIInterviewRoom from './pages/AIInterviewRoom'
 import AIInterviewReport from './pages/AIInterviewReport'
 import RecruiterDashboard from './pages/RecruiterDashboard'
+import RecruiterCandidates from './pages/RecruiterCandidates'
+import RecruiterAnalysis from './pages/RecruiterAnalysis'
+import RecruiterReport from './pages/RecruiterReport'
+import RecruiterComparison from './pages/RecruiterComparison'
+import CandidateApply from './pages/CandidateApply'
+import ApplicationSuccess from './pages/ApplicationSuccess'
+import CandidateStatus from './pages/CandidateStatus'
+import MultiProjectDashboard from './pages/MultiProjectDashboard'
 import CodingPractice from './pages/CodingPractice'
 import CandidateDashboard from './pages/CandidateDashboard'
 import CompanyDashboard from './pages/CompanyDashboard'
@@ -39,7 +47,7 @@ import {FeatureProvider} from './services/FeatureContext'
 import './App.css'
 
 // Pages that render their own navbar (dashboards)
-const HIDE_NAVBAR_PATHS=['/candidate-dashboard', '/company-dashboard', '/admin-dashboard', '/admin-scoring', '/candidate-results', '/candidate-analytics', '/candidate-profile', '/resume-verification', '/quiz', '/contest'];
+const HIDE_NAVBAR_PATHS=['/candidate-dashboard', '/company-dashboard', '/admin-dashboard', '/admin-scoring', '/candidate-results', '/candidate-analytics', '/candidate-profile', '/resume-verification', '/quiz', '/contest', '/recruiter-dashboard', '/recruiter/', '/jobs/', '/application/', '/candidate/status'];
 
 function AppLayout()
 {
@@ -98,6 +106,15 @@ function AppLayout()
                     <Route path="/practice-feedback/:sessionId" element={<FeatureProvider role="student"><PracticeFeedback /></FeatureProvider>} />
                     <Route path="/proctor-dashboard" element={<FeatureProvider role="company"><ProctorDashboard /></FeatureProvider>} />
                     <Route path="/recruiter-dashboard" element={<FeatureProvider role="company"><RecruiterDashboard /></FeatureProvider>} />
+                    <Route path="/recruiter/candidates" element={<FeatureProvider role="company"><RecruiterCandidates /></FeatureProvider>} />
+                    <Route path="/recruiter/analysis/:candidateId" element={<FeatureProvider role="company"><RecruiterAnalysis /></FeatureProvider>} />
+                    <Route path="/recruiter/report/:candidateId" element={<FeatureProvider role="company"><RecruiterReport /></FeatureProvider>} />
+                    <Route path="/recruiter/compare" element={<FeatureProvider role="company"><RecruiterComparison /></FeatureProvider>} />
+                    <Route path="/jobs/:jobId/apply" element={<CandidateApply />} />
+                    <Route path="/jobs/apply" element={<CandidateApply />} />
+                    <Route path="/application/success" element={<ApplicationSuccess />} />
+                    <Route path="/candidate/status" element={<CandidateStatus />} />
+                    <Route path="/recruiter/projects/:candidateId" element={<FeatureProvider role="company"><MultiProjectDashboard /></FeatureProvider>} />
                 </Routes>
             </div>
         </div>

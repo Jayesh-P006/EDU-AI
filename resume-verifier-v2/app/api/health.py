@@ -17,7 +17,7 @@ logger = structlog.get_logger(__name__)
 async def health(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     db_status = "ok"
     redis_status = "ok"
-    gemini_status = "ok"
+    huggingface_status = "ok"
 
     try:
         await db.execute(text("SELECT 1"))
@@ -31,15 +31,15 @@ async def health(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     except Exception as exc:
         redis_status = f"error: {exc}"
 
-    if not settings.is_gemini_configured:
-        gemini_status = "not_configured"
+    if not settings.is_huggingface_configured:
+        huggingface_status = "not_configured"
     else:
         try:
             llm = get_llm_service()
             ok = await llm.check_connectivity()
-            gemini_status = "ok" if ok else "error: no response"
+            huggingface_status = "ok" if ok else "error: no response"
         except Exception as exc:
-            gemini_status = f"error: {exc}"
+            huggingface_status = f"error: {exc}"
 
     overall = (
         "ok"
@@ -52,5 +52,5 @@ async def health(db: AsyncSession = Depends(get_db)) -> HealthResponse:
         service="resume-verifier-v2",
         database=db_status,
         redis=redis_status,
-        gemini=gemini_status,
+        huggingface=huggingface_status,
     )

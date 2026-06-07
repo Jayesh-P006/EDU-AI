@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import axios from 'axios';
 import {createRequire} from 'module';
 const require=createRequire(import.meta.url);
 const pdfParse=require('pdf-parse');
@@ -10,6 +11,46 @@ import {verifyAuth, verifyAuthOptional, verifyRole} from '../middleware/auth.js'
 import {APIResponse} from '../middleware/response.js';
 import {parseResume, extractCGPA, extractProjects, calculateJobMatchScore, extractSkills} from '../services/resumeParser.js';
 import {uploadToCloudinary} from '../services/cloudinary.js';
+
+const RESUME_VERIFIER_URL = process.env.RESUME_VERIFIER_URL || 'http://localhost:8001';
+const RESUME_VERIFIER_API_KEY = process.env.RESUME_VERIFIER_API_KEY || '';
+
+// Extract GitHub repo URLs from plain text using regex
+function extractGithubUrls(text) {
+  const pattern = /https?:\/\/(?:www\.)?github\.com\/([\w][\w\-.]+)\/([\w][\w\-.]+?)(?:\.git|\/|$|\s)/gi;
+  const seen = new Set();
+  const repos = [];
+  let m;
+  while ((m = pattern.exec(text)) !== null) {
+    const url = `https://github.com/${m[1]}/${m[2]}`;
+    if (!seen.has(url)) {
+      seen.add(url);
+      repos.push({
+        name: m[2].replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        githubUrl: url,
+        owner: m[1],
+      });
+    }
+  }
+  return repos;
+}
+
+
+// Fire-and-forget: kick off GitHub repo verification without blocking the apply response
+function triggerResumeVerification(candidateId, resumeText, githubProfile = '') {
+  if (!resumeText || resumeText.length < 30) return;
+  console.log(`[JOBS] Triggering FastAPI for ${candidateId} | github="${githubProfile}" | text=${resumeText.length}chars`);
+  // Pass githubProfile so FastAPI can call GitHub API when PDF links are not plain text
+  axios.post(
+    `${RESUME_VERIFIER_URL}/api/v1/resume/analyze`,
+    { candidateId, resumeText, githubProfile: githubProfile || '' },
+    { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, timeout: 15000 },
+  ).then(r => {
+    console.log(`[JOBS] ✅ Dispatched for ${candidateId} — ${r.data?.projectsQueued ?? 0} repos queued`);
+  }).catch(err => {
+    console.warn(`[JOBS] ⚠ FastAPI call failed for ${candidateId}: ${err.response?.status} ${err.message}`);
+  });
+}
 
 const router=express.Router();
 
@@ -262,6 +303,42 @@ router.delete('/:jobId', verifyAuth, async (req, res) =>
    APPLICATION ROUTES (Candidate-side)
    ═══════════════════════════════════════════════════════════════════ */
 
+// Preview: extract GitHub repos from a PDF before submitting application (fast, no DB write)
+router.post('/preview-resume', verifyAuth, resumeUpload.single('resume'), async (req, res) =>
+{
+  try
+  {
+    let resumeText = '';
+    if (req.file && req.file.mimetype === 'application/pdf') {
+      const pdfData = await pdfParse(req.file.buffer);
+      resumeText = pdfData.text || '';
+    }
+
+    // Get the candidate's GitHub profile from DB as fallback for hyperlink-only PDFs
+    const candidate = await User.findById(req.user?.userId || req.user?.id).select('github socialLinks').lean();
+    const githubProfile = candidate?.github || candidate?.socialLinks?.github || '';
+
+    // Delegate discovery to FastAPI (it handles both regex + GitHub API fallback)
+    const fastapiRes = await axios.post(
+      `${RESUME_VERIFIER_URL}/api/v1/resume/discover`,
+      { candidateId: String(req.user?.userId || req.user?.id), resumeText: resumeText || 'resume preview scan placeholder text for github discovery', githubProfile },
+      { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, timeout: 10000, validateStatus: null },
+    );
+
+    const repos = (fastapiRes.data?.projects || []).map(p => ({
+      name: p.name,
+      githubUrl: p.githubUrl,
+      owner: p.githubUrl?.split('/')[3] || '',
+    }));
+
+    return res.json({repos, repoCount: repos.length});
+  } catch (err)
+  {
+    console.warn('[JOBS] preview-resume error:', err.message);
+    return res.json({repos: [], repoCount: 0});
+  }
+});
+
 // Apply to a job
 router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (req, res) =>
 {
@@ -478,6 +555,13 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
     // Increment applicant count
     await Job.findByIdAndUpdate(jobId, {$inc: {applicantCount: 1}});
 
+    // Kick off GitHub repo verification in background (non-blocking)
+    const resumeTextForVerification = uploadedResumeText || candidate?.resumeText || '';
+    // Priority: form field > DB profile field (form field handles hyperlink-only PDFs)
+    const candidateGithub = req.body.githubProfile || candidate?.github || candidate?.socialLinks?.github || '';
+    const githubRepos = extractGithubUrls(resumeTextForVerification);
+    triggerResumeVerification(candidateId, resumeTextForVerification, candidateGithub);
+
     console.log(`[JOBS] ✅ Application submitted for job "${job.title}" by candidate ${candidateId} (ATS: ${atsData.atsScore}, Eligible: ${atsData.eligible})`);
 
     return res.status(201).json({
@@ -499,6 +583,8 @@ router.post('/:jobId/apply', verifyAuth, resumeUpload.single('resume'), async (r
         eligibilityReasons: atsData.eligibilityReasons,
         projectDetails: atsData.projectDetails||[],
         createdAt: application.createdAt,
+        githubReposFound: githubRepos.length,
+        githubRepos: githubRepos.slice(0, 6),
       },
     });
   } catch (err)

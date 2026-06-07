@@ -1,17 +1,65 @@
 import { useCallback, useRef, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const TTS_BASE = import.meta.env.VITE_TTS_BASE || "http://localhost:8002";
 
-function speak(text) {
-  if (!("speechSynthesis" in window) || !text) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.95;
-  utterance.pitch = 1;
-  const voice = window.speechSynthesis
-    .getVoices()
-    .find((candidate) => candidate.lang?.startsWith("en"));
-  if (voice) utterance.voice = voice;
-  window.speechSynthesis.speak(utterance);
+// ── Audio queue: Coqui TTS backend with browser-TTS fallback ─────────────────
+const _audioQueue = [];
+let _audioPlaying = false;
+let _currentAudio = null;
+
+function _playNext() {
+  if (!_audioQueue.length) { _audioPlaying = false; return; }
+  _audioPlaying = true;
+  const { text, url } = _audioQueue.shift();
+  if (url) {
+    _currentAudio = new Audio(url);
+    _currentAudio.onended = () => { URL.revokeObjectURL(url); _playNext(); };
+    _currentAudio.onerror  = () => { URL.revokeObjectURL(url); _browserSpeak(text); };
+    _currentAudio.play().catch(() => { URL.revokeObjectURL(url); _browserSpeak(text); });
+  } else {
+    _browserSpeak(text);
+  }
+}
+
+function _browserSpeak(text) {
+  if (!text || !("speechSynthesis" in window)) { _playNext(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate  = 0.92;
+  u.pitch = 1.05;
+  const voice = window.speechSynthesis.getVoices().find(v => v.lang?.startsWith("en-") && v.localService);
+  if (voice) u.voice = voice;
+  u.onend = () => _playNext();
+  u.onerror = () => _playNext();
+  window.speechSynthesis.speak(u);
+}
+
+function stopSpeech() {
+  _audioQueue.length = 0;
+  _audioPlaying = false;
+  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+
+async function speak(text) {
+  if (!text?.trim()) return;
+  try {
+    const res = await fetch(`${TTS_BASE}/api/whiteboard/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!res.ok) throw new Error(`TTS ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    _audioQueue.push({ text, url });
+  } catch {
+    // TTS backend unavailable — queue for browser fallback
+    _audioQueue.push({ text, url: null });
+  }
+  if (!_audioPlaying) _playNext();
 }
 
 function toMessageHistory(messages) {
@@ -144,6 +192,7 @@ export default function useWhiteboardStream() {
       const history = toMessageHistory(messages);
       setIsStreaming(true);
       // Auto-clear the board so the new concept map starts fresh
+      stopSpeech();
       setElements([]);
       setMessages((current) => [
         ...current,

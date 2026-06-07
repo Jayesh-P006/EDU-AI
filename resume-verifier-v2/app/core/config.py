@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,15 +27,28 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/1"
 
-    # Gemini
-    gemini_api_key: str = ""
-    gemini_pro_model: str = "gemini-2.5-pro"
-    gemini_flash_model: str = "gemini-2.5-flash"
+    # Hugging Face
+    huggingface_api_key: str = ""
+    huggingface_model: str = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+    huggingface_pro_model: str = "meta-llama/Llama-3.3-70B-Instruct"
+
+    # Groq (fallback LLM)
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
 
     # GitHub
     github_token: Optional[str] = None
     max_repo_size_mb: int = 500
     download_timeout_seconds: int = 120
+
+    # Fallback repo URLs — used when no GitHub links are found in the resume text.
+    # Set via env as a comma-separated list: FALLBACK_GITHUB_URLS=url1,url2,...
+    fallback_github_urls: List[str] = [
+        "https://github.com/Navn2025/Recruit_AI",
+        "https://github.com/Navn2025/AutoBot",
+        "https://github.com/Navn2025/Ayurwell",
+        "https://github.com/Navn2025/meetFlow-server",
+    ]
 
     # Worker
     celery_concurrency: int = 4
@@ -50,8 +63,16 @@ class Settings(BaseSettings):
         return self.max_repo_size_mb * 1024 * 1024
 
     @property
-    def is_gemini_configured(self) -> bool:
-        return bool(self.gemini_api_key)
+    def is_huggingface_configured(self) -> bool:
+        return bool(self.huggingface_api_key)
+
+    @property
+    def is_groq_configured(self) -> bool:
+        return bool(self.groq_api_key)
+
+    @property
+    def is_llm_configured(self) -> bool:
+        return self.is_huggingface_configured or self.is_groq_configured
 
 
 @lru_cache()

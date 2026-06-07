@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analyze, report, health
+from app.api import analyze, report, health, resume_analyze
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.utils.logging import configure_logging
@@ -61,3 +61,4 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 app.include_router(health.router)
 app.include_router(analyze.router)
 app.include_router(report.router)
+app.include_router(resume_analyze.router)

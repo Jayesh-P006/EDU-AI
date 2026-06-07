@@ -9,7 +9,7 @@ import
   Video, UserCheck, CheckCircle, XCircle, ExternalLink, Trophy, Calendar,
   Phone, PhoneCall, PhoneOff, Mic, Volume2, Filter, Columns3, List,
   Palette, Server, Layers, Wrench, Smartphone, Monitor, MessageSquare, Terminal, Zap,
-  Smile, Minus, Flame, Lightbulb, ClipboardList
+  Smile, Minus, Flame, Lightbulb, ClipboardList, GitBranch
 } from 'lucide-react';
 import api, {getMyInterviews} from '../services/api';
 import {useFeatures} from '../services/FeatureContext';
@@ -159,8 +159,11 @@ function DashboardTab({user, initials, setActiveTab})
   const [loadingJobs, setLoadingJobs]=useState(true);
   const [applyModal, setApplyModal]=useState(null);   // {jobId, jobTitle} when open
   const [resumeFile, setResumeFile]=useState(null);
+  const [githubUrl, setGithubUrl]=useState('');
   const [atsResult, setAtsResult]=useState(null);      // ATS result after apply
   const [applyLoading, setApplyLoading]=useState(false);
+  const [discoveredRepos, setDiscoveredRepos]=useState([]);
+  const [scanLoading, setScanLoading]=useState(false);
 
   useEffect(() =>
   {
@@ -194,6 +197,24 @@ function DashboardTab({user, initials, setActiveTab})
     setApplyModal({jobId, jobTitle: job?.title||'Job'});
     setResumeFile(null);
     setAtsResult(null);
+    setDiscoveredRepos([]);
+    setScanLoading(false);
+  };
+
+  const handleResumeFileChange=async (file) =>
+  {
+    setResumeFile(file||null);
+    setDiscoveredRepos([]);
+    if (!file||file.type!=='application/pdf') return;
+    setScanLoading(true);
+    try
+    {
+      const fd=new FormData();
+      fd.append('resume', file);
+      const res=await api.post('/jobs/preview-resume', fd, {headers: {'Content-Type': 'multipart/form-data'}});
+      setDiscoveredRepos(res.data.repos||[]);
+    } catch { /* silent fail */ }
+    finally { setScanLoading(false); }
   };
 
   const handleApply=async () =>
@@ -205,6 +226,7 @@ function DashboardTab({user, initials, setActiveTab})
       const formData=new FormData();
       formData.append('candidateId', user.id);
       if (resumeFile) formData.append('resume', resumeFile);
+      if (githubUrl.trim()) formData.append('githubProfile', githubUrl.trim());
 
       const res=await api.post(`/jobs/${applyModal.jobId}/apply`, formData, {
         headers: {'Content-Type': 'multipart/form-data'},
@@ -418,12 +440,34 @@ function DashboardTab({user, initials, setActiveTab})
                     <h4>Upload Your Resume</h4>
                     <p>Upload a PDF resume for better ATS scoring</p>
                     <input type="file" accept=".pdf,.doc,.docx" id="dash-resume-upload" style={{display: 'none'}}
-                      onChange={(e) => setResumeFile(e.target.files[0]||null)} />
+                      onChange={(e) => handleResumeFileChange(e.target.files[0]||null)} />
                     <label htmlFor="dash-resume-upload" className="ats-upload-btn">
                       <FileText size={16} /> {resumeFile? resumeFile.name:'Choose File'}
                     </label>
                     {resumeFile&&<span className="ats-file-info">{(resumeFile.size/1024).toFixed(0)} KB · {resumeFile.type.split('/').pop().toUpperCase()}</span>}
                   </div>
+                  {scanLoading&&(
+                    <div className="ats-github-scanning">
+                      <span className="ats-scan-pulse"/><span>Scanning for GitHub repositories…</span>
+                    </div>
+                  )}
+                  {!scanLoading&&discoveredRepos.length>0&&(
+                    <div className="ats-github-found">
+                      <GitBranch size={14}/><strong>{discoveredRepos.length} GitHub {discoveredRepos.length===1?'repo':'repos'} found</strong>
+                      <div className="ats-github-chips">
+                        {discoveredRepos.map((r,i)=><span key={i} className="ats-github-chip">{r.name}</span>)}
+                      </div>
+                      <span className="ats-github-note">Will be auto-verified after submission</span>
+                    </div>
+                  )}
+                  {!scanLoading&&discoveredRepos.length===0&&(
+                    <div className="ats-github-url-row">
+                      <GitBranch size={14}/>
+                      <input className="ats-github-url-input" type="url"
+                        placeholder="GitHub profile URL (e.g. https://github.com/yourname)"
+                        value={githubUrl} onChange={e=>setGithubUrl(e.target.value)}/>
+                    </div>
+                  )}
                   <p className="ats-upload-note">Resume is optional — your profile data will be used for ATS scoring if not uploaded.</p>
                 </div>
                 <div className="ats-apply-footer">
@@ -495,9 +539,21 @@ function DashboardTab({user, initials, setActiveTab})
                       </div>
                     )}
                   </div>
+                  {atsResult.githubReposFound>0&&(
+                    <div className="ats-github-verifying">
+                      <GitBranch size={14}/>
+                      <div>
+                        <strong>{atsResult.githubReposFound} GitHub {atsResult.githubReposFound===1?'repo':'repos'} detected</strong>
+                        <span> — verification running in background</span>
+                        <div className="ats-github-chips" style={{marginTop:6}}>
+                          {(atsResult.githubRepos||[]).map((r,i)=><span key={i} className="ats-github-chip verified">{r.name}</span>)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="ats-apply-footer">
-                  <button className="ats-submit-btn" onClick={() => {setApplyModal(null); setAtsResult(null); setResumeFile(null);}}>Done</button>
+                  <button className="ats-submit-btn" onClick={() => {setApplyModal(null); setAtsResult(null); setResumeFile(null); setDiscoveredRepos([]);}}>Done</button>
                 </div>
               </>
             )}
@@ -527,8 +583,11 @@ function JobsTab({user})
   const [applyingId, setApplyingId]=useState(null);
   const [applyModal, setApplyModal]=useState(null);
   const [resumeFile, setResumeFile]=useState(null);
+  const [githubUrl, setGithubUrl]=useState('');
   const [atsResult, setAtsResult]=useState(null);
   const [applyLoading, setApplyLoading]=useState(false);
+  const [discoveredRepos, setDiscoveredRepos]=useState([]);
+  const [scanLoading, setScanLoading]=useState(false);
 
   const showKanban = features['student.jobs.kanban'] !== false;
 
@@ -572,6 +631,24 @@ function JobsTab({user})
     setApplyModal({jobId, jobTitle: job?.title||'Job'});
     setResumeFile(null);
     setAtsResult(null);
+    setDiscoveredRepos([]);
+    setScanLoading(false);
+  };
+
+  const handleResumeFileChange=async (file) =>
+  {
+    setResumeFile(file||null);
+    setDiscoveredRepos([]);
+    if (!file||file.type!=='application/pdf') return;
+    setScanLoading(true);
+    try
+    {
+      const fd=new FormData();
+      fd.append('resume', file);
+      const res=await api.post('/jobs/preview-resume', fd, {headers: {'Content-Type': 'multipart/form-data'}});
+      setDiscoveredRepos(res.data.repos||[]);
+    } catch { /* silent fail */ }
+    finally { setScanLoading(false); }
   };
 
   const handleApply=async () =>
@@ -584,6 +661,7 @@ function JobsTab({user})
       const formData=new FormData();
       formData.append('candidateId', user.id);
       if (resumeFile) formData.append('resume', resumeFile);
+      if (githubUrl.trim()) formData.append('githubProfile', githubUrl.trim());
 
       const res=await api.post(`/jobs/${applyModal.jobId}/apply`, formData, {
         headers: {'Content-Type': 'multipart/form-data'},
@@ -830,12 +908,34 @@ function JobsTab({user})
                     <h4>Upload Your Resume</h4>
                     <p>Upload a PDF resume for better ATS scoring</p>
                     <input type="file" accept=".pdf,.doc,.docx" id="jobs-resume-upload" style={{display: 'none'}}
-                      onChange={(e) => setResumeFile(e.target.files[0]||null)} />
+                      onChange={(e) => handleResumeFileChange(e.target.files[0]||null)} />
                     <label htmlFor="jobs-resume-upload" className="ats-upload-btn">
                       <FileText size={16} /> {resumeFile? resumeFile.name:'Choose File'}
                     </label>
                     {resumeFile&&<span className="ats-file-info">{(resumeFile.size/1024).toFixed(0)} KB · {resumeFile.type.split('/').pop().toUpperCase()}</span>}
                   </div>
+                  {scanLoading&&(
+                    <div className="ats-github-scanning">
+                      <span className="ats-scan-pulse"/><span>Scanning for GitHub repositories…</span>
+                    </div>
+                  )}
+                  {!scanLoading&&discoveredRepos.length>0&&(
+                    <div className="ats-github-found">
+                      <GitBranch size={14}/><strong>{discoveredRepos.length} GitHub {discoveredRepos.length===1?'repo':'repos'} found</strong>
+                      <div className="ats-github-chips">
+                        {discoveredRepos.map((r,i)=><span key={i} className="ats-github-chip">{r.name}</span>)}
+                      </div>
+                      <span className="ats-github-note">Will be auto-verified after submission</span>
+                    </div>
+                  )}
+                  {!scanLoading&&discoveredRepos.length===0&&(
+                    <div className="ats-github-url-row">
+                      <GitBranch size={14}/>
+                      <input className="ats-github-url-input" type="url"
+                        placeholder="GitHub profile URL (e.g. https://github.com/yourname)"
+                        value={githubUrl} onChange={e=>setGithubUrl(e.target.value)}/>
+                    </div>
+                  )}
                   <p className="ats-upload-note">Resume is optional — your profile data will be used for ATS scoring if not uploaded.</p>
                 </div>
                 <div className="ats-apply-footer">
@@ -907,9 +1007,21 @@ function JobsTab({user})
                       </div>
                     )}
                   </div>
+                  {atsResult.githubReposFound>0&&(
+                    <div className="ats-github-verifying">
+                      <GitBranch size={14}/>
+                      <div>
+                        <strong>{atsResult.githubReposFound} GitHub {atsResult.githubReposFound===1?'repo':'repos'} detected</strong>
+                        <span> — verification running in background</span>
+                        <div className="ats-github-chips" style={{marginTop:6}}>
+                          {(atsResult.githubRepos||[]).map((r,i)=><span key={i} className="ats-github-chip verified">{r.name}</span>)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="ats-apply-footer">
-                  <button className="ats-submit-btn" onClick={() => {setApplyModal(null); setAtsResult(null); setResumeFile(null);}}>Done</button>
+                  <button className="ats-submit-btn" onClick={() => {setApplyModal(null); setAtsResult(null); setResumeFile(null); setDiscoveredRepos([]);}}>Done</button>
                 </div>
               </>
             )}

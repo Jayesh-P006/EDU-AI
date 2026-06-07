@@ -1,6 +1,6 @@
 """
 Node 6 — Authenticity Analysis
-Uses Gemini Pro to perform deep architectural analysis.
+Uses Hugging Face Inference to perform deep architectural analysis.
 Evaluates whether the project represents genuine engineering work.
 """
 
@@ -167,7 +167,7 @@ def _heuristic_authenticity(repo_metadata: dict, ast_data: dict) -> dict:
     return {
         "authenticityScore": round(score, 1),
         "riskLevel": risk,
-        "reasoning": ["Gemini unavailable — heuristic score based on repository structure"],
+        "reasoning": ["HuggingFace unavailable — heuristic score based on repository structure"],
         "indicators": {
             "architectureDepth": "moderate" if score > 60 else "shallow",
             "templateRisk": "low" if score > 70 else "medium",
@@ -224,5 +224,5 @@ async def authenticity_node(state: AnalysisState) -> dict[str, Any]:
     fallback = _heuristic_authenticity(repo_metadata, ast_data)
     return {
         "authenticity_result": fallback,
-        "errors": ["Gemini Pro unavailable for authenticity analysis — used heuristic fallback"],
+        "errors": ["HuggingFace unavailable for authenticity analysis — used heuristic fallback"],
     }

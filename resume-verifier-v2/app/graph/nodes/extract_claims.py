@@ -1,6 +1,6 @@
 """
 Node 1 — Claim Extraction
-Extracts verifiable technical claims from the resume using Gemini Flash.
+Extracts verifiable technical claims from the resume using Hugging Face Inference.
 Falls back to regex keyword matching when LLM is unavailable.
 """
 
@@ -74,7 +74,7 @@ async def extract_claims_node(state: AnalysisState) -> dict[str, Any]:
         system_prompt=SYSTEM_PROMPT,
         user_prompt=USER_PROMPT.format(resume_text=resume_text[:8000]),
         output_model=ClaimsOutput,
-        use_pro=False,  # Flash is sufficient for extraction
+        use_pro=False,
     )
 
     if result and result.claims:
@@ -87,7 +87,7 @@ async def extract_claims_node(state: AnalysisState) -> dict[str, Any]:
     logger.info("claims_extracted_fallback", count=len(claims))
     return {
         "claims": claims,
-        "errors": ["Gemini unavailable for claim extraction — used regex fallback"],
+        "errors": ["HuggingFace unavailable for claim extraction — used regex fallback"],
     }
 
 

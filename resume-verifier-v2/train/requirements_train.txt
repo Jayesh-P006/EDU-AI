@@ -1,0 +1,22 @@
+# Training dependencies (install separately from the main app)
+
+# Core ML
+torch>=2.1.0
+transformers>=4.45.0
+datasets>=2.20.0
+accelerate>=0.34.0
+
+# Training from scratch
+tokenizers>=0.19.0
+
+# Fine-tuning (kept for reference, not needed for from-scratch)
+# peft>=0.12.0
+# trl>=0.11.0
+# bitsandbytes>=0.43.0
+
+# HuggingFace Hub
+huggingface_hub>=1.0.0
+
+# Utilities
+sentencepiece
+protobuf

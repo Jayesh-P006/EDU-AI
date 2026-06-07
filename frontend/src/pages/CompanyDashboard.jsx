@@ -8,7 +8,7 @@ import
   Timer, PlayCircle, Settings, Award, Target, Filter,
   ArrowUpRight, Activity, Trophy,
   Bot, Loader, Check, X, Sparkles, RefreshCw, Trash2, Terminal, Code,
-  Brain, FileBarChart, ExternalLink, Phone, Mail, Crown, Hash
+  Brain, FileBarChart, ExternalLink, Phone, Mail, Crown, Hash, GitBranch
 } from 'lucide-react';
 import Chart from 'react-apexcharts';
 import api, {createInterview, scheduleInterview, getJobInterviews} from '../services/api';
@@ -1484,6 +1484,11 @@ function CompanyDashboard()
                                 <button className="ats-act-btn view" title="View Details" onClick={(e) => {e.stopPropagation(); setSelectedCandidate(c);}}><Eye size={14} /></button>
                                 {c.resumeUrl&&(
                                   <a className="ats-act-btn resume" href={c.resumeUrl} target="_blank" rel="noopener noreferrer" title="View Resume" onClick={(e) => e.stopPropagation()}><FileText size={14} /></a>
+                                )}
+                                {c.candidate?.id&&(
+                                  <button className="ats-act-btn github" title="GitHub Verification Report" onClick={(e) => {e.stopPropagation(); navigate(`/recruiter/projects/${c.candidate.id}`);}}>
+                                    <GitBranch size={14} />
+                                  </button>
                                 )}
                                 {c.status!=='interview'&&c.status!=='rejected'&&c.eligible!==false&&features['company.candidates.schedule_interview'] !== false&&(
                                   <button className="ats-act-btn schedule" onClick={(e) => {e.stopPropagation(); handleScheduleInterview(c, jobId, c.id);}} disabled={schedulingCandidate===c.candidate?.id} title="Schedule Interview">

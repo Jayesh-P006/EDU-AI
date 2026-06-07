@@ -115,10 +115,26 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 
-async def init_db() -> None:
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("database_initialized")
+async def init_db(retries: int = 5, delay: float = 3.0) -> None:
+    import asyncio
+    last_err: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            async with async_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("database_initialized")
+            return
+        except Exception as exc:
+            last_err = exc
+            logger.warning(
+                "database_init_retry",
+                attempt=attempt,
+                max=retries,
+                error=str(exc),
+            )
+            if attempt < retries:
+                await asyncio.sleep(delay)
+    raise RuntimeError(f"Database unreachable after {retries} attempts: {last_err}") from last_err
 
 
 async def close_db() -> None:

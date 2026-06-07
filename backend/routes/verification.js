@@ -1,5 +1,6 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import User from '../models/User.js';
 import AIInterview from '../models/AIInterview.js';
 import aiInterviewer from '../services/aiInterviewer.js';
@@ -10,6 +11,9 @@ import {
   experienceGate,
 } from '../services/verificationService.js';
 import { parseResume, parseJD, analyzeGap } from '../services/resumeParser.js';
+
+const RESUME_VERIFIER_URL = process.env.RESUME_VERIFIER_URL || 'http://localhost:8001';
+const RESUME_VERIFIER_API_KEY = process.env.RESUME_VERIFIER_API_KEY || '';
 
 const router = express.Router();
 
@@ -421,6 +425,94 @@ router.post('/:userId/verify-interview-result', async (req, res) => {
   }
 });
 
+
+// ─── Multi-project resume verification (proxies to FastAPI microservice) ──────
+
+// POST /resume/discover — parse resume text, preview discovered GitHub repos
+router.post('/resume/discover', async (req, res) => {
+  try {
+    const { candidateId, resumeText } = req.body;
+    if (!candidateId || !resumeText) {
+      return res.status(400).json({ error: 'candidateId and resumeText are required' });
+    }
+    const { status, data } = await axios.post(
+      `${RESUME_VERIFIER_URL}/api/v1/resume/discover`,
+      { candidateId, resumeText },
+      { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, validateStatus: null }
+    );
+    res.status(status).json(data);
+  } catch (err) {
+    console.error('Resume discover proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to reach resume verification service' });
+  }
+});
+
+// POST /resume/analyze — discover repos + dispatch parallel Celery analysis jobs
+router.post('/resume/analyze', async (req, res) => {
+  try {
+    const { candidateId, resumeText } = req.body;
+    if (!candidateId || !resumeText) {
+      return res.status(400).json({ error: 'candidateId and resumeText are required' });
+    }
+    const { status, data } = await axios.post(
+      `${RESUME_VERIFIER_URL}/api/v1/resume/analyze`,
+      { candidateId, resumeText },
+      { headers: { 'x-api-key': RESUME_VERIFIER_API_KEY }, validateStatus: null }
+    );
+    res.status(status).json(data);
+  } catch (err) {
+    console.error('Resume analyze proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to reach resume verification service' });
+  }
+});
+
+// GET /resume/group/:groupId — poll aggregate status of parallel analysis jobs
+router.get('/resume/group/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { candidateId } = req.query;
+    if (!candidateId) {
+      return res.status(400).json({ error: 'candidateId query param is required' });
+    }
+    const { status, data } = await axios.get(
+      `${RESUME_VERIFIER_URL}/api/v1/resume/group/${groupId}`,
+      {
+        params: { candidateId },
+        headers: { 'x-api-key': RESUME_VERIFIER_API_KEY },
+        validateStatus: null,
+      }
+    );
+    res.status(status).json(data);
+  } catch (err) {
+    console.error('Resume group status proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to reach resume verification service' });
+  }
+});
+
+// GET /:candidateId/multi — get multi-project analysis summary for a candidate
+router.get('/:candidateId/multi', async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+    const { status, data } = await axios.get(
+      `${RESUME_VERIFIER_URL}/api/v1/resume/group/latest`,
+      {
+        params: { candidateId },
+        headers: { 'x-api-key': RESUME_VERIFIER_API_KEY },
+        validateStatus: null,
+        timeout: 8000,
+      }
+    );
+    // 404 = no jobs for this candidate yet — return empty state, not an error
+    if (status === 404) {
+      return res.status(200).json({ projects: [], totalProjects: 0, overallStatus: 'pending', message: 'No analysis jobs found' });
+    }
+    res.status(status).json(data);
+  } catch (err) {
+    console.error('Multi-project fetch error:', err.message);
+    // Service unreachable — return empty state so UI shows "not started" instead of crashing
+    res.status(200).json({ projects: [], totalProjects: 0, overallStatus: 'pending', message: 'Verification service unavailable' });
+  }
+});
 
 // ─── Reset verification ──────────────────────────────────
 router.delete('/:userId/reset', async (req, res) => {

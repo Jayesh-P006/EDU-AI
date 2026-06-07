@@ -5,12 +5,14 @@ from datetime import datetime
 
 class AnalyzeRequest(BaseModel):
     candidateId: str = Field(..., min_length=1, max_length=255)
-    githubUrl: str = Field(..., description="GitHub repository URL")
+    githubUrl: Optional[str] = Field(None, description="GitHub repository URL — auto-extracted from resumeText if omitted")
     resumeText: str = Field(..., min_length=10)
 
     @field_validator("githubUrl")
     @classmethod
-    def validate_github_url(cls, v: str) -> str:
+    def validate_github_url(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
         v = v.strip().rstrip("/")
         if v.endswith(".git"):
             v = v[:-4]
@@ -149,5 +151,5 @@ class HealthResponse(BaseModel):
     service: str
     database: str
     redis: str
-    gemini: str
+    huggingface: str
     version: str = "2.0.0"

@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.security import verify_api_key
 from app.models.analysis import AnalysisJob, AnalysisResult, JobStatus
 from app.schemas.analysis import AnalyzeRequest, AnalyzeResponse, AnalysisStatusResponse
+from app.services.github_discovery import extract_github_repos
 from app.workers.analysis_worker import run_analysis
 
 logger = structlog.get_logger(__name__)
@@ -26,10 +27,32 @@ async def submit_analysis(
     request: AnalyzeRequest,
     db: AsyncSession = Depends(get_db),
 ) -> AnalyzeResponse:
+    github_url = request.githubUrl
+
+    # Auto-extract GitHub URL from resume text if not explicitly provided
+    if not github_url:
+        repos = extract_github_repos(request.resumeText)
+        if not repos:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "No githubUrl provided and none found in resumeText. "
+                    "Include a GitHub repo URL in the request or in the resume "
+                    "(e.g. https://github.com/user/repo)."
+                ),
+            )
+        github_url = repos[0].github_url
+        logger.info(
+            "github_url_extracted_from_resume",
+            candidate_id=request.candidateId,
+            extracted_url=github_url,
+            total_found=len(repos),
+        )
+
     job = AnalysisJob(
         id=uuid.uuid4(),
         candidate_id=request.candidateId,
-        github_url=request.githubUrl,
+        github_url=github_url,
         resume_text=request.resumeText,
         status=JobStatus.QUEUED,
     )

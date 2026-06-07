@@ -2,10 +2,12 @@ import json
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
+from pydantic import BaseModel
 
 from app.models.whiteboard import SaveWhiteboardRequest, SolveRequest
 from app.services.groq_whiteboard import stream_whiteboard_solution
+from app.services import tts_service
 
 router = APIRouter(prefix="/api/whiteboard", tags=["whiteboard"])
 
@@ -47,6 +49,44 @@ async def solve_whiteboard(payload: SolveRequest, request: Request) -> Streaming
             "X-Accel-Buffering": "no",
         },
     )
+
+
+class TTSRequest(BaseModel):
+    text: str
+
+
+@router.post("/tts")
+async def text_to_speech(payload: TTSRequest) -> Response:
+    """
+    Synthesize speech with Coqui TTS and return a WAV audio file.
+    Returns 503 if the TTS model is not installed.
+    """
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    audio = await tts_service.synthesize(text)
+    if audio is None:
+        raise HTTPException(
+            status_code=503,
+            detail="TTS service unavailable — install TTS: pip install TTS",
+        )
+
+    return Response(
+        content=audio,
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get("/tts/status")
+async def tts_status() -> dict:
+    available = tts_service.is_available()
+    return {
+        "available": available,
+        "model": tts_service.TTS_MODEL,
+        "status": "ready" if available else ("loading" if available is None else "unavailable"),
+    }
 
 
 @router.post("/save")

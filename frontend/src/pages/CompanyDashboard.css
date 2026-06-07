@@ -2253,6 +2253,11 @@ a/* ── Company Dashboard ─────────────────
   border-color: rgba(59, 130, 246, 0.4);
   color: #60a5fa;
 }
+.ats-act-btn.github:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
 .ats-act-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
